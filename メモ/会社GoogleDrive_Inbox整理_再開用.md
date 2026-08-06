@@ -2,9 +2,17 @@
 
 **アカウント:** `onextec.inagaki@gmail.com`  
 **更新:** 2026-08-06  
-**状態:** 行き先はすべて確定。移動は未実施（この環境から Drive は操作不可。家の Mac で実行）
+**状態:** 行き先はすべて確定。移動スクリプト用意済み。**クラウド会話では実行不可。Mac の Cursor Desktop（ローカル）で実行。**
 
-**再開フレーズ:** 「会社ファイルを移動させて」→ 下の対応表どおり `00_Inbox` から移動する。
+**再開フレーズ（Mac / Cursor Desktop ローカルエージェントへ）:**  
+「会社ファイルを移動させて」→ 下を実行:
+
+```bash
+python3 scripts/move_drive_inbox.py --dry-run
+python3 scripts/move_drive_inbox.py --execute
+```
+
+Google Drive for desktop を起動し、`onextec.inagaki@gmail.com` がマウントされていること。
 
 ---
 
@@ -52,13 +60,21 @@
 
 ---
 
-## 家の Mac での作業手順
+## 家の Mac での作業手順（Cursor にやらせる）
 
-1. Google Drive for desktop で `onextec.inagaki@gmail.com` を開く
-2. `マイドライブ / 00_Inbox` を開く
-3. 上表 #1〜#9 を順に移動
-4. #10: `【こ】高洋電気` 内に `カドカさん` → その下に `2026` を作成し、PDFを格納
-5. Inbox が空になったら完了。このメモの状態を「移動済み」に更新
+1. **このクラウド会話ではなく**、Mac の **Cursor Desktop** でローカルエージェントを開く  
+   （今の会話は mobile→クラウド実行のため、Mac の Drive に触れない）
+2. Google Drive for desktop で `onextec.inagaki@gmail.com` を接続
+3. ローカルエージェントに「会社ファイルを移動させて」と送る  
+   またはターミナルで:
+
+```bash
+cd <このリポジトリ>
+python3 scripts/move_drive_inbox.py --dry-run
+python3 scripts/move_drive_inbox.py --execute
+```
+
+4. Inbox が空になったら完了。このメモの状態を「移動済み」に更新
 
 ---
 
