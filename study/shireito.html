@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="合格司令塔">
+<title>2028 合格司令塔</title>
+<style>
+:root{
+  --bg:#f5f2ea; --bg2:#faf8f4; --card:#ffffff; --ink:#16203c; --ink2:#4a5468;
+  --ink3:#8b93a5; --line:#e4dfd4; --navy:#16203c;
+  --must:#b4541f; --review:#2f6b4f; --weak:#6b4fa0; --mine:#1f6f8b;
+  --warn:#9a3412; --warnbg:#fdf0e6;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12151d; --bg2:#171b25; --card:#1c212d; --ink:#eef1f6; --ink2:#b3bccd;
+    --ink3:#7b87a0; --line:#2b3242; --navy:#e8ecf4;
+    --must:#e8935f; --review:#6fbf95; --weak:#b195e0; --mine:#6fc0d8;
+    --warn:#f0a882; --warnbg:#2a1c14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  line-height:1.7;-webkit-text-size-adjust:100%}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 64px}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--ink3);font-weight:700}
+
+/* ヘッダ */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 0 6px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.badge{width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--bg2);
+  display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+@media (prefers-color-scheme:dark){.badge{color:#12151d}}
+h1{font-size:17px;margin:0;font-weight:800;letter-spacing:.02em}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:999px;
+  padding:5px 12px;color:var(--ink2);background:var(--bg2);white-space:nowrap}
+
+/* ヒーロー */
+.hero{display:grid;grid-template-columns:1fr;gap:20px;padding:22px 0 8px}
+@media(min-width:860px){.hero{grid-template-columns:1.1fr .9fr;align-items:center}}
+.hero h2{font-size:clamp(26px,5.2vw,40px);line-height:1.35;margin:10px 0 8px;font-weight:800;letter-spacing:-.01em}
+.hero p{margin:0;color:var(--ink2);font-size:14px}
+.panel{background:var(--navy);color:#f3f1ea;border-radius:16px;padding:18px}
+@media (prefers-color-scheme:dark){.panel{background:#222938;color:var(--ink)}}
+.panel .lab{font-size:12px;opacity:.7;margin-bottom:10px}
+.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cond button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  color:inherit;border-radius:10px;padding:10px 4px;font:inherit;font-size:13px;
+  cursor:pointer;line-height:1.35}
+.cond button b{display:block;font-size:14px}
+.cond button small{opacity:.65;font-size:11px}
+.cond button[aria-pressed="true"]{background:#fffdf7;color:var(--navy);border-color:#fffdf7;font-weight:700}
+@media (prefers-color-scheme:dark){.cond button[aria-pressed="true"]{background:var(--ink);color:#12151d}}
+
+/* セクション */
+section{padding:26px 0 4px}
+.shead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.shead h3{font-size:22px;margin:4px 0 0;font-weight:800}
+.shead .meta{font-size:12px;color:var(--ink3)}
+
+/* カード */
+.cards{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:720px){.cards{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--line);
+  border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:9px}
+.card.k-gap{border-top-color:var(--must)}
+.card.k-srs{border-top-color:var(--review)}
+.card.k-weak{border-top-color:var(--weak)}
+.card.k-mine{border-top-color:var(--mine)}
+.card.done{opacity:.5}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.08em}
+.k-gap .ctag{color:var(--must)} .k-srs .ctag{color:var(--review)} .k-weak .ctag{color:var(--weak)} .k-mine .ctag{color:var(--mine)}
+.cmin{color:var(--ink3);font-weight:600;letter-spacing:0}
+.tag{align-self:flex-start;font-size:11px;background:var(--bg);border:1px solid var(--line);
+  border-radius:999px;padding:3px 10px;color:var(--ink2)}
+.card h4{margin:0;font-size:17px;font-weight:800;line-height:1.5}
+.card .how{margin:0;font-size:13.5px;color:var(--ink2)}
+/* カードの中身（条文→言えたら要点・元の正解肢）*/
+.body{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+.body .ask{margin:0;font-size:14px;line-height:1.75;color:var(--ink)}
+.body .arts{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:5px}
+.body .arts span{font-size:11.5px;background:var(--card);border:1px solid var(--line);
+  border-radius:6px;padding:2px 7px;color:var(--ink2)}
+.body .ans{margin:10px 0 0;font-size:15px;font-weight:800;color:var(--review)}
+.body .gain{margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.65;color:var(--ink)}
+.body .gain span,.body .one span,.body .trap span{display:inline-block;margin-right:7px;font-size:10.5px;
+  font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:5px;background:var(--card);
+  border:1px solid var(--line);color:var(--ink3);vertical-align:1px}
+.body .pts{margin:0}
+.body .pts dt{margin:10px 0 2px;font-size:13px;font-weight:800;color:var(--review)}
+.body .pts dt:first-child{margin-top:0}
+.body .pts dd{margin:0;font-size:14px;line-height:1.75;color:var(--ink)}
+.body .pts b,.body .trap b{background:linear-gradient(transparent 60%,rgba(214,170,60,.35) 60%)}
+.body .one{margin:12px 0 0;font-size:14.5px;font-weight:800;line-height:1.6}
+.body .trap{margin:8px 0 0;font-size:13px;line-height:1.7;color:var(--ink2)}
+.body .ans.thin{font-size:12px;font-weight:600;color:var(--ink3)}
+.body .reveal{margin-top:0;width:100%;font:inherit;font-size:13px;font-weight:700;
+  padding:9px;border-radius:9px;border:1px dashed var(--line);background:transparent;
+  color:var(--ink2);cursor:pointer}
+.body .reveal:hover{border-style:solid;color:var(--ink)}
+.why{margin:0;font-size:12px;color:var(--ink3);border-left:2px solid var(--line);padding-left:9px}
+.why b{color:var(--ink2);font-weight:700}
+.acts{display:flex;gap:8px;margin-top:4px}
+.acts button{flex:1;border-radius:10px;padding:11px 8px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:#fdfbf6}
+@media (prefers-color-scheme:dark){.acts button{color:#12151d}}
+.acts .sub{flex:0 0 auto;background:transparent;color:var(--ink2);border-color:var(--line);font-weight:600;padding:11px 12px}
+
+/* 2カラム下段 */
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:800px){.grid2{grid-template-columns:1fr 1fr}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.box h3{margin:6px 0 12px;font-size:18px;font-weight:800}
+.qlist{list-style:none;margin:0;padding:0}
+.qlist li{padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;
+  display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.qlist li:first-child{border-top:0}
+.qlist .s{font-size:11px;color:var(--ink3);white-space:nowrap}
+.road{list-style:none;margin:0;padding:0}
+.road li{padding:9px 0 9px 16px;border-left:2px solid var(--line);position:relative;font-size:14px}
+.road li::before{content:"";position:absolute;left:-5px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.road li.now{font-weight:800}
+.road li.now::before{background:var(--must)}
+.road .d{font-size:11px;color:var(--ink3);display:block;font-weight:500}
+.links{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-top:4px}
+.links a{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;background:var(--bg2)}
+.links a span{display:block;font-size:11px;color:var(--ink3)}
+.links a b{font-size:13.5px}
+.note{font-size:12px;color:var(--ink3);margin:12px 0 0}
+/* 日次運用の流れ */
+.flow{display:grid;gap:8px;grid-template-columns:1fr;margin-top:12px}
+@media(min-width:720px){.flow{grid-template-columns:repeat(3,1fr)}}
+.flow div{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:10px 14px;font-size:12px;color:var(--ink3)}
+.flow div b{display:block;font-size:14px;color:var(--ink)}
+.flow div span{float:right;font-size:11px;color:var(--ink3);font-weight:700}
+/* 入力フォーム */
+.fld{display:block;margin:0 0 10px}
+.fld span{display:block;font-size:12px;color:var(--ink3);margin-bottom:4px;font-weight:600}
+.fld input{width:100%;font:inherit;font-size:15px;padding:9px 11px;border-radius:9px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+.frow{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.qlist .qgo{text-decoration:none;color:inherit;display:block}
+.qlist .qgo b{display:block;font-weight:700;font-size:14px;line-height:1.5}
+.qlist .qgo small{color:var(--ink3);font-size:11.5px;display:block;line-height:1.6}
+.qlist a.qgo:hover b{text-decoration:underline}
+.acts a.sub{display:grid;place-items:center;text-decoration:none;background:transparent;
+  color:var(--ink2);border:1px solid var(--line);border-radius:10px;font-size:13px;
+  font-weight:600;padding:0 14px;flex:0 0 auto}
+.qlist li .del{background:none;border:0;color:var(--ink3);font:inherit;font-size:12px;cursor:pointer;padding:0 2px}
+.warn{background:var(--warnbg);border:1px solid var(--warn);color:var(--warn);
+  border-radius:12px;padding:12px 14px;font-size:13px;margin:14px 0 0}
+.warn b{display:block;margin-bottom:3px}
+footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink3)}
+.empty{font-size:14px;color:var(--ink2);background:var(--card);border:1px dashed var(--line);
+  border-radius:14px;padding:20px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <div class="badge">28</div>
+    <div>
+      <div class="eyebrow">PRIVATE STUDY COMMAND</div>
+      <h1>2028 合格司令塔</h1>
+    </div>
+  </div>
+  <div class="chip" id="chipDate">読み込み中…</div>
+</header>
+
+<div class="hero">
+  <div>
+    <div class="eyebrow" id="heroEyebrow">—</div>
+    <h2>今日は、どこまでなら<br>無理なく進められますか。</h2>
+    <p>長くやる日ではなく、明日も戻ってこられる量を選びます。</p>
+  </div>
+  <div class="panel">
+    <div class="lab">今日の体調</div>
+    <div class="cond" id="cond">
+      <button type="button" data-b="15"><b>低め</b><small>5〜15分</small></button>
+      <button type="button" data-b="35" aria-pressed="true"><b>普通</b><small>20〜40分</small></button>
+      <button type="button" data-b="60"><b>良い</b><small>45分〜</small></button>
+    </div>
+  </div>
+</div>
+
+<div id="alertBox"></div>
+
+<section>
+  <div class="shead">
+    <div><div class="eyebrow">TODAY</div><h3>今日の一手</h3></div>
+    <div class="meta" id="planMeta"></div>
+  </div>
+  <div class="cards" id="cards"><div class="empty">データを読み込んでいます…</div></div>
+</section>
+
+<section>
+  <div class="grid2">
+    <div class="box">
+      <div class="eyebrow">REVIEW QUEUE</div>
+      <h3>復習待ち <span id="qCount" style="font-size:13px;color:var(--ink3);font-weight:600"></span></h3>
+      <ul class="qlist" id="queue"></ul>
+      <p class="note" id="queueNote"></p>
+    </div>
+    <div class="box">
+      <div class="eyebrow">ROAD TO 2028</div>
+      <h3>今いる場所</h3>
+      <ul class="road">
+        <li class="now">土台と習慣<span class="d">2026.08 — 2027.03</span></li>
+        <li>短答・論文を往復<span class="d">2027年度</span></li>
+        <li>本番形式へ<span class="d">2028年度</span></li>
+      </ul>
+      <p class="note">試験日程と法改正は、公式発表後に差し替えます。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><div><div class="eyebrow">ONE ROUTE</div><h3>見る場所を、一つに。</h3></div></div>
+  <div class="links">
+    <a href="https://docs.google.com/document/d/1_fyT3bQnveUs1mU2-VzvKSXMvHWCEGcytFEEeVpAwq0/edit"><span>毎日上書き</span><b>今日の作戦</b></a>
+    <a href="https://docs.google.com/spreadsheets/d/13vRfOpxv7DR9jwPR5Wi6dC5-REeeTTkEo3hJTr0PgUw/edit"><span>記録と復習</span><b>短答ミス</b></a>
+    <a href="https://docs.google.com/document/d/1j9Cw4nUz37hmrs6QbCEbPpLNtH3teoKMt49vF9yf3LA/edit"><span>日曜に上書き</span><b>週次レビュー</b></a>
+    <a href="https://docs.google.com/document/d/1PtYzFYlEplqpf_yUs5GEsrCjwi018EZlfcyFtCVDGWI/edit"><span>必要時だけ</span><b>法改正ウォッチ</b></a>
+    <a href="https://drive.google.com/drive/folders/1jREbA6l0SXSaMRjXm61xA2medCFttmXW"><span>正本フォルダ</span><b>00_INBOX</b></a>
+    <a href="https://drive.google.com/drive/folders/17PgJRSlg9bODhCDsIz0BkXvTRA691ci6"><span>GoodNotes投入</span><b>使うPDFだけ</b></a>
+    <a href="https://mail.google.com/mail/u/0/#search/subject%3A(%E4%BB%8A%E6%97%A5%E3%81%AE%E4%BD%9C%E6%88%A6)"><span>朝に見る面</span><b>[予備] 今日の作戦</b></a>
+    <a href="review.html"><span>同じデータで動く</span><b>復習フィード</b></a>
+    <a href="ai/"><span>5社横断</span><b>AI横断ノート</b></a>
+  </div>
+  <div class="flow">
+    <div><span>1</span><b>Drive</b>正本を更新</div>
+    <div><span>2</span><b>Gmail</b>件名固定の1通</div>
+    <div><span>3</span><b>今日の一手</b>ここで実行・記録</div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><div><div class="eyebrow">MY CONTROLS</div><h3>学習管理</h3></div></div>
+  <div class="grid2">
+    <div class="box">
+      <div class="eyebrow">DAILY RHYTHM</div>
+      <h3>学習の上限</h3>
+      <label class="fld"><span>1日の上限（分）</span>
+        <input type="number" id="capMin" min="5" max="180" step="5"></label>
+      <p class="note" style="margin:8px 0 12px">体調が「良い」日でも、ここを超える計画は立てません。<br>無理をした翌日に戻れなくなるのを防ぐためのブレーキです。</p>
+      <div class="acts">
+        <button type="button" id="saveCap">上限を保存</button>
+        <button type="button" class="sub" id="bkOut">書き出し</button>
+        <button type="button" class="sub" id="bkIn">読み込み</button>
+      </div>
+      <input type="file" id="bkFile" accept="application/json" hidden>
+      <p class="note" id="capNote"></p>
+    </div>
+    <div class="box">
+      <div class="eyebrow">ADD ONE THING</div>
+      <h3>課題を一つ追加</h3>
+      <form id="addForm">
+        <div class="frow">
+          <label class="fld"><span>科目</span><input type="text" id="mSub" placeholder="例：刑法"></label>
+          <label class="fld"><span>分</span><input type="number" id="mMin" value="15" min="5" max="90" step="5"></label>
+        </div>
+        <label class="fld"><span>やること</span>
+          <input type="text" id="mAct" placeholder="例：共同正犯を一行で説明する" required></label>
+        <label class="fld"><span>着手日</span><input type="date" id="mDay"></label>
+        <div class="acts"><button type="submit">この課題を足す</button></div>
+      </form>
+      <ul class="qlist" id="mineList" style="margin-top:12px"></ul>
+      <p class="note">自分で足した課題は、この端末のブラウザに残ります。<br>機種を変えるときは「書き出し」でJSONを持ち出してください。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>やれなかった日を責めず、戻れた日を記録する。</div>
+  <div id="srcline"></div>
+</footer>
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════
+   2028 合格司令塔 — 実データ駆動版
+   原則：カードは必ず実データ＋根拠から作る。根拠が無いものは出さない。
+   出どころ  ① context.json  … 科目別の進捗・放置日数・繰り返しの弱点
+             ② ai/data/manifest.json … 実際に解いた日と問題番号（間隔反復の種）
+   固定の例文は一切持たない。読めなかったら「読めなかった」と出す。
+   ══════════════════════════════════════════════════════════ */
+const VER = "20260927-2";
+const CTX_URL = () => `https://raw.githubusercontent.com/osamuina8008/business-tools/main/study/context.json?t=${Date.now()}`;
+const MAN_URL = () => `ai/data/manifest.json?t=${Date.now()}`;
+const PACK_URL = () => `pack.json?t=${Date.now()}`;
+
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const dayKey = d => { const x=new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; };
+const TODAY = dayKey(Date.now());
+const daysBetween = (a,b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ── Obsidian（復習フィードと同じ置き場所に書く）── */
+const OBS_VAULT = localStorage.getItem("rf_obs_vault") || "Time based-司法試験予備試験";
+const SUBJ_DIR = {"刑事訴訟法":"1.刑訴法","刑訴法":"1.刑訴法","刑訴":"1.刑訴法",
+  "民事訴訟法":"2.民訴法","民訴法":"2.民訴法","民訴":"2.民訴",
+  "会社法":"3.商法","商法":"3.商法","民法":"4.民法","刑法":"5.刑法",
+  "行政法":"6.行政法","憲法":"7.憲法"};
+function obsDir(sub){
+  const k=(sub||"").trim();
+  if(SUBJ_DIR[k]) return `TimeBase/20_Study/${SUBJ_DIR[k]}`;
+  const hit=Object.keys(SUBJ_DIR).sort((a,b)=>b.length-a.length).find(x=>k.includes(x));
+  return hit ? `TimeBase/20_Study/${SUBJ_DIR[hit]}` : "TimeBase/20_Study";
+}
+function obsWrite(c){
+  const file = `${obsDir(c.subject)}/復習メモ_${TODAY}`;
+  const body = [
+    `## ${c.title}`,
+    c.subject ? `- 科目：${c.subject}` : "",
+    `- やること：${c.how}`,
+    c.body ? `- 何を聞いている：${c.body.a}` : "",
+    (c.body && c.body.ar && c.body.ar.length) ? `- 条文：${c.body.ar.join("・")}` : "",
+    `- なぜ今日：${c.why.replace(/<[^>]+>/g,"")}`,
+    `- 自分の言葉で言うと：`
+  ].filter(Boolean).join("\n");
+  location.href = `obsidian://new?vault=${encodeURIComponent(OBS_VAULT)}&file=${encodeURIComponent(file)}&append=true&content=${encodeURIComponent(body+"\n")}`;
+}
+
+/* ── 実行ログ（同じ課題が毎日出続けないようにする）── */
+const LOG_KEY = "st_log_v1";
+let doneLog = (()=>{ try{ return JSON.parse(localStorage.getItem(LOG_KEY)||"[]"); }catch(e){ return []; } })();
+const saveLog = () => { try{ localStorage.setItem(LOG_KEY, JSON.stringify(doneLog.slice(-400))); }catch(e){} };
+const lastDone = key => { const h=doneLog.filter(x=>x.key===key); return h.length ? h[h.length-1].d : null; };
+/* 種類ごとの休止日数：やったばかりのものは出さない */
+const COOLDOWN = {gap:1, srs:14, weak:3, mine:9999, body:9999};   /* 自分で足した分は一度やれば終わり */
+function isResting(key,kind){
+  const d = lastDone(key); if(!d) return false;
+  return daysBetween(d, TODAY) < (COOLDOWN[kind]||1);
+}
+
+/* ── 自分で足した課題（この端末のブラウザに残る）── */
+const MINE_KEY = "st_manual_v1";
+let mine = (()=>{ try{ return JSON.parse(localStorage.getItem(MINE_KEY)||"[]"); }catch(e){ return []; } })();
+const saveMine = () => { try{ localStorage.setItem(MINE_KEY, JSON.stringify(mine)); }catch(e){} };
+
+/* ── 1日の上限（体調が良くてもここで止める）── */
+let capMin = Number(localStorage.getItem("st_cap")||60);
+
+/* ── 体調（=今日の持ち時間）── */
+let budget = Number(localStorage.getItem("st_budget")||35);
+document.querySelectorAll("#cond button").forEach(b=>{
+  b.setAttribute("aria-pressed", String(Number(b.dataset.b)===budget));
+  b.addEventListener("click", ()=>{
+    budget = Number(b.dataset.b);
+    try{ localStorage.setItem("st_budget", budget); }catch(e){}
+    document.querySelectorAll("#cond button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    render();
+  });
+});
+
+/* ══════ カードを作る ══════ */
+let CTX=null, MAN=null, PACK=null, POOL=[], QUEUE=[];
+const revealed = new Set();   /* 今日、答えを開いたカード */
+/* pack.json（問題ごとの「何を聞いているか・条文・正解」）を引くための索引 */
+const PQ = new Map();          /* "2026-08-14民訴法|Q263" → 中身 */
+const PBYSUBJ = new Map();     /* "民訴法" → 中身の配列（日付の古い順）*/
+/* context.json は「民事訴訟法」、AI横断ノートは「民訴法」。名前を寄せる。 */
+const SUBJ_ALIAS = {"民事訴訟法":"民訴法","刑事訴訟法":"刑訴法","会社法":"商法"};
+const normSubj = x => SUBJ_ALIAS[(x||"").trim()] || (x||"").trim();
+function indexPack(){
+  (PACK?.items||[]).forEach(it=>{
+    PQ.set(`${it.d}|${it.q}`, it);
+    const k = normSubj(it.s);
+    if(!PBYSUBJ.has(k)) PBYSUBJ.set(k, []);
+    PBYSUBJ.get(k).push(it);
+  });
+  PBYSUBJ.forEach(list=>list.sort((a,b)=>a.dt<b.dt?-1:1));
+}
+
+/* ── 問題タイトルから論点名だけを取り出す ──
+   manifest には「Q258　支配人【重要度A】」「Q226ウの場合」のような行も混ざる。
+   番号や重要度を落として、意味のある論点名だけを残す。 */
+function topicOf(q){
+  let t = String(q.title||"")
+    .replace(/^Q?\s*\d+[\s\u3000.:：]*/,"")   /* 先頭のQ番号 */
+    .replace(/【[^】]*】/g,"")                  /* 【重要度A】 */
+    .replace(/（[^）]*）/g,"")                  /* （平成19年 体系No.93）*/
+    .replace(/［[^］]*］/g,"")                  /* ［正解：5］ */
+    .trim();
+  if(!t) return "";
+  if(/^Q?\d+$/.test(t)) return "";                  /* 番号だけ */
+  if(/^[ではにをがともの、。]/.test(t)) return "";        /* 「で優先して覚える3点」「の解き方」*/
+  if(/^[ぁ-んァ-ヶ][のはがをでにと]/.test(t)) return "";  /* 「ウの場合」 */
+  if(t.length > 30) return "";
+  return t;
+}
+/* AI横断ノートは #2026-08-14民訴法/Q263 の形で直接開ける */
+const aiLink = (day,id) => `ai/#${encodeURIComponent(day)}/${encodeURIComponent(id)}`;
+
+/* 「今週5/10問。あと5問（6日ぶり）」から数字を取り出す */
+function parseSituation(s){
+  s = s||"";
+  const g = /[（(](\d+)日ぶり[)）]/.exec(s);
+  return { gapDays: g ? Number(g[1]) : null };
+}
+/* 「短答3問｜論点：A・B・C」から論点部分を取り出す */
+function splitAction(a){
+  a = (a||"").trim();
+  const i = a.indexOf("論点：");
+  return i < 0 ? {head:a, topics:""} : {head:a.slice(0,i).replace(/[｜|]\s*$/,"").trim(), topics:a.slice(i+3).trim()};
+}
+
+/* 遅れている科目のカードに、実際の1問をぶら下げる。
+   「短答を3問」とだけ言われても、電車の中では何も始められないため。 */
+const usedBodies = new Set();
+function pickForSubject(subject){
+  const all = PBYSUBJ.get(normSubj(subject)) || [];
+  /* 「これで身につくこと」(g) が作れている問題を先に出す（2026-09-27）*/
+  const list = [...all.filter(it=>it.g), ...all.filter(it=>!it.g)];
+  for(const it of list){
+    const k = `${it.d}|${it.q}`;
+    if(usedBodies.has(k)) continue;
+    if(lastDone(`body:${k}`)) continue;          /* 前に開いた分は飛ばす */
+    usedBodies.add(k);
+    return it;
+  }
+  return null;
+}
+
+function buildPool(){
+  const pool = [];
+  usedBodies.clear();
+
+  /* ⓪ 自分で足した課題 ─ 着手日が来たものを最優先で出す */
+  mine.forEach(m=>{
+    if(m.day && m.day > TODAY) return;
+    const late = m.day ? daysBetween(m.day, TODAY) : 0;
+    pool.push({
+      kind:"mine", key:`mine:${m.id}`, subject:(m.subject||"").trim(),
+      minutes: Number(m.minutes)||15,
+      title: m.act,
+      how: "自分で決めた課題です。終わったら記録して、ここから消します。",
+      why: `<b>自分で追加</b>${m.day ? "・"+esc(m.day)+"に着手と決めた" : ""}${late>0 ? `（${late}日超過）` : ""}`,
+      score: 1000 + late
+    });
+  });
+
+  /* ① 放置している科目 ─ context.json の today_tasks */
+  (CTX?.today_tasks||[]).forEach(t=>{
+    const sub = (t.subject||"").trim(); if(!sub) return;
+    const {gapDays} = parseSituation(t.situation);
+    const {head, topics} = splitAction(t.action);
+    const left = (t.target_q!=null && t.actual_q!=null) ? Math.max(0, t.target_q - t.actual_q) : null;
+    if(left === 0) return;                       // 今週の目標を満たしている科目は出さない
+    if(gapDays==null && !t.situation) return;    // 根拠が取れないものは出さない
+    const key = `gap:${sub}`;
+    const gapBody = pickForSubject(sub);
+    /* 「今週5/10問。あと5問（6日ぶり）」→ 日数は見出しで出すので本文からは外す */
+    const sit = (t.situation||"").replace(/[（(]\d+日ぶり[)）]/,"").replace(/[。・]\s*$/,"").trim();
+    pool.push({
+      kind:"gap", key, subject:sub, minutes:15,
+      title: gapBody && gapBody.t ? gapBody.t : `${sub}の短答を3問`,
+      how: gapBody
+        ? `${sub}の短答3問、まずこの1問から。` + (gapBody.g ? `下の条文で何が決まっているか、言ってから要点を開きます。` : `見出しの論点を自分の言葉で説明してから、要点を開きます。`)
+        : (topics ? `論点は ${topics}。正解を見る前に、どこが問われているかを一言で言います。`
+                  : `${head||"短答3問"}。正解を見る前に、どこが問われているかを一言で言います。`),
+      why: `<b>${gapDays!=null ? gapDays+"日ぶり" : "進捗あり"}</b>${sit ? "・"+esc(sit) : ""}`,
+      body: gapBody,
+      link: gapBody ? aiLink(gapBody.d, gapBody.q) : "",
+      score: (gapDays||0) + (t.status==="遅れ" ? 3 : 0)
+    });
+  });
+
+  /* ② 間隔反復 ─ 実際に解いた日と問題番号（manifest.json） */
+  const SRS = [7,14,30,60,120];
+  (MAN?.days||[]).forEach(d=>{
+    const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.day||""); if(!m) return;
+    const date = m[1], elapsed = daysBetween(date, TODAY);
+    if(elapsed < SRS[0]) return;
+    const due = SRS.filter(x=>x<=elapsed).pop();
+    const sub = (d.subject||"").trim();
+    const qs = (d.qs||[]).filter(q=>q.id && q.id!=="論文");
+    const ronbun = (d.qs||[]).some(q=>q.id==="論文") || /論文/.test(d.day);
+    const key = `srs:${d.day}:${due}`;
+    if(ronbun && !qs.length){
+      pool.push({
+        kind:"srs", key, subject:sub, minutes:20,
+        title:`${sub}の論文を骨組みだけ書き直す`,
+        how:`${date}に書いた答案。今日は結論まで書かず、問題提起と規範だけを5行で。`,
+        why:`<b>${elapsed}日経過</b>・${due}日の復習どき`,
+        score: elapsed*0.5 + 4
+      });
+      return;
+    }
+    if(!qs.length) return;
+    /* 中身（何を聞いているか）を持つ問題を最優先。次に論点名のある問題。
+       番号しか無いものを見出しにすると、電車の中で何もできない。 */
+    const withBody = [...qs.filter(q=>PQ.get(`${d.day}|${q.id}`)?.g),
+                      ...qs.filter(q=>{const x=PQ.get(`${d.day}|${q.id}`); return x && !x.g;})];
+    const named    = qs.filter(q=>topicOf(q));
+    const order    = withBody.length ? withBody : (named.length ? named : qs);
+    const lead     = order[0];
+    const body     = PQ.get(`${d.day}|${lead.id}`) || null;
+    const rest     = order.slice(1,3).map(q=>q.id);
+    pool.push({
+      kind:"srs", key, subject:sub, minutes:10,
+      title: (body && body.t) || topicOf(lead) || `${sub} ${lead.id} をもう一度`,
+      how: body
+        ? `${lead.id}（${date}に解いた回）。` + (body.g ? `下の条文で何が決まっているか、言ってから要点を開きます。` : `まず見出しの論点を自分の言葉で説明してから、要点を開きます。`)
+        : `${lead.id}${rest.length?"・"+rest.join("・"):""}（${date}に解いた回）。答えを隠して、肢の切り方だけ先に言います。`,
+      why:`<b>${elapsed}日経過</b>・${date}に解いた回`,
+      link: aiLink(d.day, lead.id),
+      ids: [lead.id, ...rest].join("・"), day:d.day, body,
+      score: elapsed*0.5
+    });
+  });
+
+  /* ③ 繰り返しつまずいている論点 ─ persistent_weak */
+  (CTX?.persistent_weak||[]).forEach(w=>{
+    const kw=(w.keyword||"").trim(); if(!kw) return;
+    pool.push({
+      kind:"weak", key:`weak:${kw}`, subject:(w.subject||"").trim(), minutes:5,
+      title:`「${kw}」を30秒で言い切る`,
+      how:`定義と、判断の分かれ目を一文ずつ。詰まった所がそのまま今日の弱点です。`,
+      why:`<b>${w.count||2}回つまずいた記録</b>${w.subject ? "・"+esc(w.subject) : ""}`,
+      score: (w.count||2)*4
+    });
+  });
+
+  /* 「短答を3問」とだけ書いたカードが先頭に来ると、その場で何もできない。
+     中身（問題文の要点）を持つカードを必ず前に出す。 */
+  return pool.sort((a,b)=> (b.body?1:0)-(a.body?1:0) || b.score-a.score);
+}
+
+/* 持ち時間に収まるだけ選ぶ。同じ種類・同じ科目で埋め尽くさない */
+function selectCards(pool){
+  const out=[], perKind={gap:0,srs:0,weak:0,mine:0}, perSub={};
+  const MAXK={gap:2,srs:2,weak:2,mine:3};
+  const limit = Math.min(budget, capMin);   /* 体調と1日の上限、厳しい方を採る */
+  let used=0;
+  const bodyUsed = new Set();
+  for(const c of pool){
+    /* 今日記録した分は「記録済み」として今日は残す（消えると押した手応えが無いため）*/
+    if(isResting(c.key,c.kind) && lastDone(c.key)!==TODAY) continue;
+    /* 同じ問題が2枚に出ない（遅れ科目と間隔反復で重なることがある）*/
+    if(c.body){ const bk=`${c.body.d}|${c.body.q}`; if(bodyUsed.has(bk)) continue; bodyUsed.add(bk); }
+    if(perKind[c.kind] >= MAXK[c.kind]) continue;
+    if((perSub[c.subject]||0) >= 2) continue;
+    if(out.length && used + c.minutes > limit) continue;
+    out.push(c); used += c.minutes;
+    perKind[c.kind]++; perSub[c.subject]=(perSub[c.subject]||0)+1;
+    if(used >= limit) break;
+  }
+  return out;
+}
+
+/* ══════ 描画 ══════ */
+/* 「これで身につくこと」版の中身（card_gain.py → pack.json の g）2026-09-27
+   押す前: 身につくこと＋条文の見出しだけ。押した後: 条文ごとの中身・一言で・ひっかけ。 */
+const hl = s => esc(s).replace(/【([^】]*)】/g,"<b>$1</b>");
+const ansLine = b => `<p class="ans thin">${b.ans
+  ? `元の短答は 肢${esc(b.ans)} が正解（問題文は「開く」で確認）`
+  : `元の短答の正解はAIで割れています。「開く」で確かめてください。`}</p>`;
+function gainHTML(b, shown){
+  const g = b.g;
+  return `<div class="body">
+    ${g.gain?`<p class="gain"><span>身につくこと</span>${esc(g.gain)}</p>`:""}
+    ${shown
+      ? `<dl class="pts">${g.p.map(p=>`<dt>${esc(p.k)}</dt><dd>${hl(p.v)}</dd>`).join("")}</dl>
+         ${g.one?`<p class="one"><span>一言で</span>${esc(g.one)}</p>`:""}
+         ${g.trap?`<p class="trap"><span>ひっかけ</span>${hl(g.trap)}</p>`:""}
+         ${ansLine(b)}`
+      : `<p class="arts">${g.p.map(p=>`<span>${esc(p.k)}</span>`).join("")}</p>
+         <button type="button" class="reveal" data-act="reveal">言えたら、要点を見る</button>`}
+  </div>`;
+}
+function cardHTML(c){
+  const label = {gap:"今日の必須", srs:"期限の復習", weak:"繰り返しの弱点", mine:"自分で足した"}[c.kind];
+  const done = lastDone(c.key)===TODAY;
+  const b = c.body;
+  const shown = revealed.has(c.key);
+  return `<article class="card k-${c.kind}${done?" done":""}" data-key="${esc(c.key)}">
+    <div class="crow"><span class="ctag">${label}</span><span class="cmin">${c.minutes}分</span></div>
+    ${c.subject?`<span class="tag">${esc(c.subject)}${b?"・"+esc(b.q):""}</span>`:""}
+    <h4>${esc(c.title)}</h4>
+    <p class="how">${esc(c.how)}</p>
+    ${b && b.g ? gainHTML(b, shown) : ""}
+    ${b && !b.g ? `<div class="body">
+      ${(b.ar&&b.ar.length)?`<p class="arts">${b.ar.map(a=>`<span>${esc(a)}</span>`).join("")}</p>`:""}
+      ${shown
+        ? `<p class="ask">${esc(b.a)}</p>
+           <p class="ans thin">${b.ans
+              ? `元の短答は 肢${esc(b.ans)} が正解（問題文は「開く」で確認）`
+              : `元の短答の正解はAIで割れています。「開く」で確かめてください。`}</p>`
+        : `<button type="button" class="reveal" data-act="reveal">言えたら、要点を見る</button>`}
+    </div>` : ""}
+    <p class="why">なぜ今日：${c.why}</p>
+    <div class="acts">
+      <button type="button" data-act="done">${done?"記録済み":"この課題を記録する"}</button>
+      ${c.link?`<a class="sub" href="${esc(c.link)}" title="問題を開く">開く</a>`:""}
+      <button type="button" class="sub" data-act="obs">📝</button>
+    </div>
+  </article>`;
+}
+
+function render(){
+  const picked = selectCards(POOL);
+  const box = $("#cards");
+  if(!POOL.length){
+    box.innerHTML = `<div class="empty">出す根拠のあるデータが見つかりませんでした。<br>固定の例文は出しません。</div>`;
+  }else if(!picked.length){
+    box.innerHTML = `<div class="empty">今日の分はすべて記録済みです。ここで閉じて大丈夫です。</div>`;
+  }else{
+    box.innerHTML = picked.map(cardHTML).join("");
+  }
+  const total = picked.reduce((a,c)=>a+c.minutes,0);
+  const doneN = picked.filter(c=>lastDone(c.key)===TODAY).length;
+  $("#planMeta").textContent = picked.length
+    ? `${total}分の計画・${picked.length}件` + (doneN ? (doneN===picked.length ? "・今日はここまでで十分です" : `・${doneN}件 記録済み`) : "")
+    : "";
+
+  /* 復習待ち＝今日出さなかった間隔反復の残り */
+  const rest = POOL.filter(c=>c.kind!=="gap" && !picked.includes(c) && !isResting(c.key,c.kind)).slice(0,6);
+  QUEUE = rest;
+  $("#queue").innerHTML = rest.length
+    ? rest.map(c=>{
+        /* 論点名を主、科目・番号・経過日数は1行にまとめる（横に並べると狭い画面で潰れる）*/
+        const meta = [c.subject, c.ids, c.why.replace(/<[^>]+>/g,"")].filter(Boolean).join("・");
+        const head = `<b>${esc(c.title)}</b><small>${esc(meta)}</small>`;
+        return `<li>${c.link
+          ? `<a class="qgo" href="${esc(c.link)}">${head}</a>`
+          : `<span class="qgo">${head}</span>`}</li>`;
+      }).join("")
+    : `<li><span style="color:var(--ink3)">待ちはありません。</span></li>`;
+  $("#qCount").textContent = rest.length ? `${rest.length}件` : "";
+  $("#queueNote").textContent = rest.length ? "体調が良い日はここから前倒しできます。" : "";
+
+  box.querySelectorAll(".card").forEach(el=>{
+    const c = picked.find(x=>x.key===el.dataset.key); if(!c) return;
+    el.querySelector('[data-act="done"]').addEventListener("click", ()=>{
+      if(lastDone(c.key)===TODAY) return;
+      doneLog.push({d:TODAY, key:c.key, kind:c.kind, subject:c.subject, title:c.title});
+      if(c.body) doneLog.push({d:TODAY, key:`body:${c.body.d}|${c.body.q}`, kind:"body",
+                               subject:c.body.s, title:c.body.t||c.body.q});
+      saveLog(); render(); renderMine();
+    });
+    el.querySelector('[data-act="obs"]').addEventListener("click", ()=>obsWrite(c));
+    const rv = el.querySelector('[data-act="reveal"]');
+    if(rv) rv.addEventListener("click", ()=>{ revealed.add(c.key); render(); });
+  });
+}
+
+/* ══════ 学習管理（上限・自分で足す課題・持ち出し）══════ */
+function renderMine(){
+  const pending = mine.filter(m=>lastDone(`mine:${m.id}`)===null);
+  $("#mineList").innerHTML = pending.length
+    ? pending.map(m=>`<li data-id="${esc(m.id)}">
+        <span>${esc(m.subject||"—")}　${esc(m.act)}</span>
+        <span class="s">${esc(m.day||"")}・${Number(m.minutes)||15}分
+          <button type="button" class="del" title="消す">✕</button></span></li>`).join("")
+    : `<li><span style="color:var(--ink3)">まだありません。</span></li>`;
+  $("#mineList").querySelectorAll(".del").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id = b.closest("li").dataset.id;
+      mine = mine.filter(m=>m.id!==id); saveMine();
+      POOL = buildPool(); renderMine(); render();
+    });
+  });
+}
+
+function setupControls(){
+  /* 1日の上限 */
+  $("#capMin").value = capMin;
+  $("#saveCap").addEventListener("click", ()=>{
+    const v = Math.max(5, Math.min(180, Number($("#capMin").value)||60));
+    capMin = v; $("#capMin").value = v;
+    try{ localStorage.setItem("st_cap", v); }catch(e){}
+    $("#capNote").textContent = `上限を${v}分にしました。`;
+    render();
+  });
+
+  /* 課題を一つ追加 */
+  $("#mDay").value = TODAY;
+  $("#addForm").addEventListener("submit", e=>{
+    e.preventDefault();
+    const act = $("#mAct").value.trim(); if(!act) return;
+    mine.push({
+      id: String(Date.now()).slice(-8),
+      subject: $("#mSub").value.trim(),
+      minutes: Number($("#mMin").value)||15,
+      act, day: $("#mDay").value || TODAY
+    });
+    saveMine();
+    $("#mAct").value=""; $("#mSub").value="";
+    POOL = buildPool(); renderMine(); render();
+  });
+
+  /* 持ち出し（機種変え・別端末へ）*/
+  $("#bkOut").addEventListener("click", ()=>{
+    const data = {v:VER, out:new Date().toISOString(), log:doneLog, mine, cap:capMin, budget};
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));
+    const a = document.createElement("a");
+    a.href = url; a.download = `shireito_backup_${TODAY}.json`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    $("#capNote").textContent = "JSONを書き出しました。";
+  });
+  $("#bkIn").addEventListener("click", ()=>$("#bkFile").click());
+  $("#bkFile").addEventListener("change", async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{
+      const d = JSON.parse(await f.text());
+      if(Array.isArray(d.log)) { doneLog = d.log; saveLog(); }
+      if(Array.isArray(d.mine)){ mine = d.mine; saveMine(); }
+      if(d.cap){ capMin = Number(d.cap); $("#capMin").value = capMin; try{ localStorage.setItem("st_cap", capMin); }catch(x){} }
+      $("#capNote").textContent = `読み込みました（記録${doneLog.length}件・自分の課題${mine.length}件）。`;
+      POOL = buildPool(); renderMine(); render();
+    }catch(err){
+      $("#capNote").textContent = `読み込めませんでした：${err.message}`;
+    }
+    e.target.value = "";
+  });
+}
+
+function alertHTML(msg, detail){
+  $("#alertBox").innerHTML = `<div class="warn"><b>${esc(msg)}</b>${esc(detail||"")}</div>`;
+}
+
+async function boot(){
+  let ctxErr=null, manErr=null;
+  try{ const r = await fetch(CTX_URL(), {cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); CTX = await r.json(); }
+  catch(e){ ctxErr = e.message; }
+  try{ const r = await fetch(MAN_URL(), {cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); MAN = await r.json(); }
+  catch(e){ manErr = e.message; }
+  try{ const r = await fetch(PACK_URL(), {cache:"no-store"}); if(r.ok){ PACK = await r.json(); indexPack(); } }
+  catch(e){ /* 中身が読めなくても、見出しだけのカードは出せる */ }
+
+  const d = new Date();
+  $("#heroEyebrow").textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日・学習設計期`;
+  $("#chipDate").textContent = "2028年度 予備試験";
+
+  /* データが古い／読めない時は、黙って例文を出さずに知らせる */
+  if(ctxErr && manErr){
+    alertHTML("データを読み込めませんでした。", `context.json：${ctxErr}／manifest.json：${manErr}。オフラインか、配信が止まっている可能性があります。`);
+  }else if(ctxErr){
+    alertHTML("進捗データ（context.json）が読めませんでした。", `${ctxErr}。今日は復習の分だけ出しています。`);
+  }else if(CTX?.date && CTX.date !== TODAY){
+    const old = daysBetween(CTX.date, TODAY);
+    if(old >= 2) alertHTML(`進捗データが${old}日前（${CTX.date}）のままです。`, "Flaskアプリの更新が止まっていないか確認してください。表示中の進捗はその時点のものです。");
+  }
+
+  POOL = buildPool();
+  setupControls();
+  renderMine();
+  const src = [];
+  if(CTX?.date) src.push(`進捗 ${CTX.date}`);
+  if(MAN?.days) src.push(`解いた記録 ${MAN.days.length}日分`);
+  $("#srcline").textContent = (src.join("・")||"データなし") + `・v${VER}`;
+  render();
+}
+boot();
+
+/* ── 新しい版が出ていたら勝手に入れ替わる ──
+   iPad/iPhoneのSafariはHTMLを掴んだまま離さないことがあるため、
+   shireito_version.json を見て食い違ったら ?v= を付けて読み直す。 */
+(async ()=>{
+  try{
+    const r = await fetch(`shireito_version.json?t=${Date.now()}`, {cache:"no-store"});
+    if(!r.ok) return;
+    const {version} = await r.json();
+    if(version && version !== VER && !location.search.includes("v="+version)){
+      location.replace(location.pathname + "?v=" + version);
+    }
+  }catch(e){ /* 取れなければ今の版のままで良い */ }
+})();
+</script>
+</body>
+</html>

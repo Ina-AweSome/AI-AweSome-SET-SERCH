@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="復習Chat">
+  <meta name="theme-color" content="#0f172a">
+  <title>予備試験 復習Chat</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0f172a;
+      --surf:     #1e293b;
+      --surf2:    #0f172a;
+      --border:   #334155;
+      --acc:      #3b82f6;
+      --acc2:     #7c3aed;
+      --ai-bub:   #1e3a5f;
+      --u-bub:    #1e293b;
+      --text:     #f1f5f9;
+      --dim:      #94a3b8;
+      --green:    #22c55e;
+      --yellow:   #f59e0b;
+      --rad:      16px;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      font-size: 15px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+
+    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 560px; margin: 0 auto; }
+
+    /* ─ ヘッダー ─ */
+    header { display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+      background: var(--surf); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    header h1 { flex: 1; font-size: 14px; font-weight: 700; }
+    header p  { font-size: 11px; color: var(--dim); }
+    .badge { font-size: 12px; font-weight: 600;
+      background: linear-gradient(135deg, var(--acc2), var(--acc));
+      color: #fff; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .icon-btn { background: none; border: none; color: var(--dim); font-size: 18px;
+      cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+    .icon-btn:active { background: var(--border); }
+
+    /* ─ 科目バー ─ */
+    #subj-bar { display: flex; gap: 6px; padding: 8px 12px;
+      background: var(--surf); border-bottom: 1px solid var(--border);
+      overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+    #subj-bar::-webkit-scrollbar { display: none; }
+    .sbt { flex-shrink: 0; font-size: 12px; padding: 4px 12px; border-radius: 14px;
+      border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; }
+    .sbt.on { background: var(--acc); border-color: var(--acc); color: #fff; font-weight: 600; }
+
+    /* ─ 共通ボタン ─ */
+    .primary-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--acc2), var(--acc));
+      color: #fff; border: none; border-radius: 24px; font-size: 15px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 16px rgba(59,130,246,.3); }
+    .primary-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .primary-btn:active:not(:disabled) { transform: scale(.98); }
+    .sec-btn { padding: 10px 20px; background: var(--surf); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--dim); font-size: 14px; cursor: pointer; }
+    .sec-btn:active { background: var(--border); }
+
+    /* ─ API設定画面 ─ */
+    #setup-screen { flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 16px; padding: 28px 20px; text-align: center; }
+    #setup-screen .big { font-size: 52px; }
+    #setup-screen h2 { font-size: 18px; font-weight: 700; }
+    #setup-screen p  { font-size: 13px; color: var(--dim); line-height: 1.7; }
+    .link { color: var(--acc); text-decoration: none; }
+    .api-in { width: 100%; background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; }
+    .api-in:focus { border-color: var(--acc); }
+
+    /* ─ スタート画面 ─ */
+    #start-screen { flex: 1; display: flex; flex-direction: column; gap: 10px;
+      padding: 12px 14px; overflow-y: auto; }
+    #start-screen > h2 { font-size: 15px; font-weight: 700; color: var(--text); }
+
+    /* 横向き2カラムレイアウト */
+    @media (orientation: landscape) {
+      #app { max-width: 1100px; }
+      #start-screen {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+        column-gap: 14px;
+        row-gap: 0;
+        padding: 10px 14px;
+        align-items: start;
+      }
+      #start-screen > h2 { grid-column: 1 / -1; margin-bottom: 2px; }
+      #ls-left  { display: flex; flex-direction: column; gap: 10px; }
+      #ls-right { display: flex; flex-direction: column; gap: 10px; }
+      #ls-bottom { grid-column: 1 / -1; }
+    }
+    @media (orientation: portrait) {
+      #ls-left, #ls-right, #ls-bottom { display: contents; }
+    }
+
+    /* 最優先チップ行 */
+    .priority-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pri-chip { font-size: 11px; padding: 3px 10px; border-radius: 14px; border: 1px solid;
+      font-weight: 600; white-space: nowrap; }
+    .pri-chip.late  { background: rgba(220,38,38,.15); border-color: rgba(220,38,38,.5); color: #fca5a5; }
+    .pri-chip.week  { background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.4); color: #93c5fd; }
+
+    /* タスクカード（per-subject） */
+    .task-card { background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
+    .task-card.late { border-left: 4px solid #dc2626; }
+    .task-card.week { border-left: 4px solid #3b82f6; }
+    .tc-head { display: flex; align-items: center; gap: 7px; }
+    .tc-subj { font-size: 14px; font-weight: 700; color: var(--text); }
+    .tc-badge { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+    .tc-badge.late { background: #7f1d1d; color: #fca5a5; }
+    .tc-badge.week { background: #1e3a5f; color: #93c5fd; }
+    .tc-sit  { font-size: 11px; color: var(--dim); }
+    .tc-theme { font-size: 11px; color: #a5b4fc; }
+    .tc-action { font-size: 12px; color: var(--text); line-height: 1.5;
+      background: rgba(255,255,255,.04); border-radius: 6px; padding: 4px 8px; }
+    .tc-check-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .tc-check-icon { font-size: 20px; min-width: 24px; transition: transform .15s; }
+    .tc-check-row:active .tc-check-icon { transform: scale(1.25); }
+    .tc-check-label { font-size: 12px; color: var(--dim); }
+    .task-card.done { opacity: .55; }
+    .task-card.done .tc-action { text-decoration: line-through; }
+
+    /* ニュースセクション */
+    #news-section .news-item { padding: 7px 0; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 2px; }
+    #news-section .news-item:last-child { border-bottom: none; }
+    .news-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 10px;
+      font-weight: 600; margin-right: 4px; white-space: nowrap; }
+    .news-badge.check { background: rgba(239,68,68,.2); border: 1px solid rgba(239,68,68,.4); color: #fca5a5; }
+    .news-badge.yoko  { background: rgba(124,58,237,.2); border: 1px solid rgba(124,58,237,.4); color: #c4b5fd; }
+    .news-badge.exam  { background: rgba(245,158,11,.2); border: 1px solid rgba(245,158,11,.4); color: #fcd34d; }
+    .news-badge.news  { background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.4); color: #86efac; }
+    a.news-title { font-size: 12px; color: #93c5fd; line-height: 1.5; text-decoration: none; display: block; }
+    a.news-title:active { opacity: .7; }
+    span.news-title { font-size: 12px; color: var(--text); line-height: 1.5; }
+    .news-src   { font-size: 10px; color: var(--dim); }
+
+    #start-screen h2 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+
+    /* ─ 学習指示カード ─ */
+    #study-guide-section .guide-body {
+      font-size: 12px; line-height: 1.75; color: var(--text);
+      white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto;
+    }
+    #study-guide-section .guide-body strong,
+    #study-guide-section .guide-body b { color: #fbbf24; font-weight: 700; }
+    #study-guide-section .guide-toggle {
+      font-size: 11px; color: var(--dim); margin-top: 6px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+
+    /* ─ 問題振り返りカード ─ */
+    .review-item {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 6px; overflow: hidden; }
+    .review-item-head {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .review-item-head:active { background: rgba(255,255,255,.04); }
+    .review-q { font-size: 12px; font-weight: 700; color: var(--acc); min-width: 32px; }
+    .review-ketsu { font-size: 11px; color: var(--dim); flex: 1; }
+    .review-arrow { font-size: 12px; color: var(--dim); transition: transform .2s; }
+    .review-arrow.open { transform: rotate(180deg); }
+    .review-item-body {
+      display: none; padding: 0 12px 10px; border-top: 1px solid rgba(255,255,255,.06); }
+    .review-item-body.open { display: block; }
+    .review-axis {
+      font-size: 12px; color: #a5b4fc; line-height: 1.6; margin-top: 8px;
+      background: rgba(99,102,241,.1); border-left: 3px solid #6366f1;
+      padding: 6px 8px; border-radius: 0 6px 6px 0; }
+    .review-ketsu-detail {
+      font-size: 11px; color: var(--dim); margin-top: 6px; line-height: 1.8; }
+    .review-bear-btn {
+      display: inline-block; margin-top: 7px; font-size: 11px;
+      background: rgba(204,102,51,.18); border: 1px solid rgba(204,102,51,.4);
+      color: #f0956a; padding: 3px 10px; border-radius: 10px; text-decoration: none; }
+
+    .ctx-card { background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; }
+    .ctx-card .card-title { font-size: 11px; font-weight: 600; color: var(--dim);
+      letter-spacing: .06em; margin-bottom: 8px; }
+    .ctx-card .subj-big { font-size: 22px; font-weight: 700; color: var(--text); }
+    .ctx-card .status-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .status-dot.gray { background: var(--dim); }
+    .ctx-card .status-text { font-size: 12px; color: var(--dim); }
+    .kw-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .kw-chip { font-size: 12px; background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+      color: #93c5fd; padding: 3px 10px; border-radius: 12px;
+      cursor: pointer; text-decoration: none; display: inline-block; }
+    .kw-chip:active { background: rgba(59,130,246,.3); }
+    .wq-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .wq-chip {
+      font-size: 12px; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35);
+      color: #fcd34d; padding: 4px 12px; border-radius: 14px;
+      cursor: pointer; display: inline-block; user-select: none;
+      transition: all .2s; -webkit-tap-highlight-color: transparent; }
+    .wq-chip:active { transform: scale(0.95); }
+    .wq-chip.checked {
+      background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.5);
+      color: #4ade80; text-decoration: line-through; opacity: 0.75; }
+
+    /* スペーシング一覧 */
+    .spacing-list { display: flex; flex-direction: column; gap: 6px; }
+    .sp-item { background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sp-left { flex: 1; min-width: 0; }
+    .sp-subj { font-size: 13px; font-weight: 600; color: var(--text); }
+    .sp-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .sp-kws  { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+    .sp-kw-btn { font-size: 11px; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35);
+      color: #fcd34d; padding: 2px 8px; border-radius: 10px;
+      text-decoration: none; display: inline-block; white-space: nowrap; }
+    .sp-kw-btn:active { background: rgba(245,158,11,.25); }
+    .sp-action-row { display: flex; gap: 6px; margin-top: 6px; }
+    .sp-note-btn { font-size: 11px; background: rgba(204,102,51,.18); border: 1px solid rgba(204,102,51,.4);
+      color: #f0956a; padding: 3px 10px; border-radius: 10px;
+      text-decoration: none; display: inline-block; white-space: nowrap; }
+    .sp-note-btn:active { background: rgba(204,102,51,.35); }
+    .sp-claude-btn { font-size: 11px; background: rgba(139,92,246,.18); border: 1px solid rgba(139,92,246,.4);
+      color: #c4b5fd; padding: 3px 10px; border-radius: 10px;
+      cursor: pointer; white-space: nowrap; }
+    .sp-claude-btn:active { background: rgba(139,92,246,.35); }
+    /* Claudeメモ展開パネル */
+    .claude-panel { display:none; margin-top:8px; border-top:1px solid rgba(139,92,246,.3); padding-top:8px; }
+    .claude-panel.open { display:block; }
+    .claude-note-item { margin-bottom:10px; }
+    .claude-note-title {
+      font-size:12px; font-weight:600; color:#c4b5fd; margin-bottom:4px;
+      display:flex; align-items:center; justify-content:space-between; gap:6px; }
+    .claude-note-body {
+      font-size:11px; color:#94a3b8; line-height:1.6;
+      background:rgba(15,23,42,.5); border-radius:6px; padding:6px 8px;
+      white-space:pre-wrap; word-break:break-word; max-height:160px; overflow-y:auto; }
+    .bear-open-btn { font-size:10px; background:rgba(204,102,51,.2); border:1px solid rgba(204,102,51,.4);
+      color:#f0956a; padding:2px 7px; border-radius:8px;
+      text-decoration:none; white-space:nowrap; flex-shrink:0; }
+
+    /* ─ スケジュール ─ */
+    #sched-section { margin-top: 4px; }
+    #sched-toggle { width: 100%; background: var(--surf); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 13px;
+      text-align: left; cursor: pointer; display: flex; justify-content: space-between; }
+    #sched-toggle:active { background: var(--border); }
+    #sched-body { display: none; background: var(--surf); border: 1px solid var(--border);
+      border-top: none; border-radius: 0 0 10px 10px; max-height: 260px; overflow-y: auto; }
+    #sched-body.open { display: block; }
+    .sched-row { display: flex; align-items: center; gap: 10px; padding: 7px 14px;
+      border-bottom: 1px solid var(--border); font-size: 13px; }
+    .sched-row:last-child { border-bottom: none; }
+    .sched-time { font-size: 12px; color: var(--dim); width: 42px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .sched-act  { flex: 1; color: var(--text); }
+    .sched-row.now { background: rgba(59,130,246,.12); }
+    .sched-row.now .sched-act { color: #93c5fd; font-weight: 600; }
+
+    /* ─ チャット ─ */
+    #chat-area { flex: 1; overflow-y: auto; padding: 12px 12px 6px;
+      display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+    .msg { display: flex; flex-direction: column; gap: 2px; }
+    .msg.user { align-items: flex-end; }
+    .msg.ai   { align-items: flex-start; }
+    .bub { max-width: 86%; padding: 10px 14px; border-radius: var(--rad);
+      font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .msg.user .bub { background: var(--u-bub); border: 1px solid var(--border); border-bottom-right-radius: 4px; }
+    .msg.ai   .bub { background: var(--ai-bub); border-bottom-left-radius: 4px; }
+    .msg-time { font-size: 10px; color: var(--dim); padding: 0 4px; }
+
+    .typing { background: var(--ai-bub); border-radius: var(--rad); border-bottom-left-radius: 4px;
+      padding: 12px 16px; display: inline-flex; gap: 5px; align-items: center; }
+    .dot { width: 7px; height: 7px; background: var(--dim); border-radius: 50%; animation: bop 1.2s infinite; }
+    .dot:nth-child(2){animation-delay:.2s} .dot:nth-child(3){animation-delay:.4s}
+    @keyframes bop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+    /* ─ クイック ─ */
+    #quick { display: flex; gap: 6px; padding: 6px 10px; overflow-x: auto;
+      flex-shrink: 0; scrollbar-width: none; }
+    #quick::-webkit-scrollbar { display: none; }
+    .qb { flex-shrink: 0; font-size: 12px; padding: 6px 14px; border-radius: 18px;
+      border: 1px solid var(--border); background: var(--surf); color: var(--text);
+      cursor: pointer; white-space: nowrap; }
+    .qb:active { background: var(--border); }
+
+    /* ─ 入力 ─ */
+    #input-row { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      background: var(--surf); border-top: 1px solid var(--border); flex-shrink: 0; }
+    #msg-in { flex: 1; background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 9px 14px; color: var(--text); font-size: 15px;
+      outline: none; resize: none; min-height: 40px; max-height: 120px; line-height: 1.4; }
+    #msg-in:focus { border-color: var(--acc); }
+    #msg-in::placeholder { color: var(--dim); }
+    #send { width: 40px; height: 40px; border-radius: 50%; background: var(--acc);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    #send:disabled { background: var(--border); cursor: not-allowed; }
+    #send svg { width: 17px; height: 17px; fill: #fff; }
+
+    .hidden { display: none !important; }
+
+    /* ─ ローディング ─ */
+    .loading-row { display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 20px; color: var(--dim); font-size: 13px; }
+    .spin { width: 18px; height: 18px; border: 2px solid var(--border);
+      border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ─ ライトモード（紙のような配色） ─ */
+    body.light {
+      --bg:     #f5f0e3;
+      --surf:   #ede8d5;
+      --surf2:  #e6e0ce;
+      --border: #c4b89a;
+      --acc:    #1d4ed8;
+      --acc2:   #6b21a8;
+      --ai-bub: #e2dac8;
+      --u-bub:  #d9d0bc;
+      --text:   #2c2420;
+      --dim:    #7a6b5a;
+      --green:  #16a34a;
+      --yellow: #b45309;
+    }
+    body.light header { background: #e8e2cf; }
+    body.light #subj-bar { background: #e8e2cf; }
+    body.light #tip-panel { background: linear-gradient(135deg,rgba(29,78,216,.09),rgba(107,33,168,.08)) !important; border-bottom-color: rgba(29,78,216,.25) !important; }
+    body.light #tip-subject { color: #1d4ed8 !important; }
+    body.light #tip-body { color: #2c2420 !important; }
+    body.light #tip-bear a { color: #1d4ed8 !important; }
+    body.light .wq-chip { background: rgba(180,83,9,.1); border-color: rgba(180,83,9,.3); color: #92400e; }
+    body.light .wq-chip.checked { background: rgba(22,163,74,.12); border-color: rgba(22,163,74,.4); color: #15803d; }
+    body.light .kw-chip { background: rgba(29,78,216,.1); border-color: rgba(29,78,216,.25); color: #1e40af; }
+    body.light .sp-kw-btn { background: rgba(180,83,9,.1); border-color: rgba(180,83,9,.3); color: #92400e; }
+    body.light .sp-note-btn { background: rgba(153,62,25,.1); border-color: rgba(153,62,25,.3); color: #9a3412; }
+    body.light .sp-claude-btn { background: rgba(107,33,168,.1); border-color: rgba(107,33,168,.3); color: #6b21a8; }
+    body.light .claude-note-body { background: rgba(0,0,0,.04); color: #5a4e42; }
+    body.light .claude-note-title { color: #6b21a8; }
+    body.light .bear-open-btn { background: rgba(153,62,25,.1); border-color: rgba(153,62,25,.3); color: #9a3412; }
+    body.light .badge { background: linear-gradient(135deg,#6b21a8,#1d4ed8); }
+    body.light #send { background: var(--acc); }
+    body.light .task-card { background: var(--surf); }
+    body.light .tc-theme { color: #4338ca; }
+    body.light .tc-action { background: rgba(0,0,0,.04); color: var(--text); }
+    body.light .tc-badge.late { background: #fee2e2; color: #b91c1c; }
+    body.light .tc-badge.week { background: #dbeafe; color: #1d4ed8; }
+    body.light .pri-chip.late { background: rgba(220,38,38,.08); color: #b91c1c; }
+    body.light .pri-chip.week { background: rgba(29,78,216,.08); color: #1d4ed8; }
+    body.light .news-title { color: #1d4ed8; }
+    body.light .review-item { background: var(--surf); }
+    body.light .review-q { color: #1d4ed8; }
+    body.light .review-axis { background: rgba(99,102,241,.08); color: #4338ca; }
+    body.light .guide-body strong { color: #b45309; }
+    body.light .review-bear-btn { background: rgba(153,62,25,.1); border-color: rgba(153,62,25,.3); color: #9a3412; }
+    body.light .primary-btn { background: linear-gradient(135deg,#6b21a8,#1d4ed8); }
+    body.light .typing { background: var(--ai-bub); }
+    body.light .dot { background: var(--dim); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ヘッダー -->
+  <header>
+    <span style="font-size:20px">📖</span>
+    <div style="flex:1">
+      <h1>予備試験 復習Chat</h1>
+      <p id="hd-date">--</p>
+    </div>
+    <span class="badge" id="hd-subj">--</span>
+    <button class="icon-btn" id="theme-btn" title="ライト/ダーク" style="font-size:16px">🌙</button>
+    <button class="icon-btn" id="font-btn" title="文字サイズ" style="font-size:14px;font-weight:700">A</button>
+    <button class="icon-btn" id="reset-btn" title="リセット">↺</button>
+  </header>
+
+  <!-- 科目バー -->
+  <div id="subj-bar">
+    <button class="sbt" data-s="憲法">憲法</button>
+    <button class="sbt" data-s="民法">民法</button>
+    <button class="sbt" data-s="刑法">刑法</button>
+    <button class="sbt" data-s="行政法">行政法</button>
+    <button class="sbt" data-s="民訴法">民訴法</button>
+    <button class="sbt" data-s="刑訴法">刑訴法</button>
+    <button class="sbt" data-s="商法">商法</button>
+  </div>
+
+  <!-- 科目ワンポイントパネル -->
+  <div id="tip-panel" class="hidden" style="
+    background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(124,58,237,.12));
+    border-bottom:1px solid rgba(59,130,246,.3);
+    padding:10px 14px; font-size:12px; line-height:1.6; flex-shrink:0;
+    animation: fadeIn .25s ease;">
+    <div id="tip-subject" style="font-size:10px;font-weight:700;color:#93c5fd;letter-spacing:.08em;margin-bottom:4px"></div>
+    <div id="tip-body" style="color:#e2e8f0"></div>
+    <div id="tip-bear" style="margin-top:6px"></div>
+  </div>
+
+  <!-- ① APIキー設定画面 -->
+  <div id="setup-screen" class="hidden">
+    <div class="big">🔑</div>
+    <h2>初回設定</h2>
+    <p>
+      Groq API キーを入力してください。<br>
+      完全無料（1日14,400回）。<br><br>
+      取得先 →
+      <a class="link" href="https://console.groq.com/keys" target="_blank">
+        console.groq.com/keys
+      </a><br>
+      <span style="font-size:11px">（Googleアカウントでログイン → Create API key）</span>
+    </p>
+    <input id="api-key-input" class="api-in" type="password" placeholder="gsk_...">
+    <button id="save-key-btn" class="primary-btn" disabled>設定して始める</button>
+    <p style="font-size:11px;color:var(--dim)">キーはこのブラウザのみに保存されます</p>
+  </div>
+
+  <!-- ② スタート画面（コンテキスト表示） -->
+  <div id="start-screen" class="hidden">
+    <h2>📋 今日の復習内容</h2>
+
+    <!-- ━━ LEFT COLUMN ━━ -->
+    <div id="ls-left">
+
+      <!-- 今日の学習（ヘッダーカード） -->
+      <div class="ctx-card" id="today-card" style="padding:10px 12px">
+        <div class="card-title">TODAY — 今日の学習</div>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div class="subj-big" id="today-subj">--</div>
+          <div id="today-log-summary" style="font-size:12px;color:var(--green)"></div>
+        </div>
+        <div class="status-row">
+          <div class="status-dot" id="status-dot"></div>
+          <div class="status-text" id="status-text">読み込み中...</div>
+        </div>
+        <div class="kw-list" id="kw-list"></div>
+        <div class="wq-list" id="wq-list"></div>
+      </div>
+
+      <!-- 最優先チップ -->
+      <div id="priority-chips-section" class="hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <h2>⚡ 最優先</h2>
+          <span id="priority-summary" style="font-size:11px;color:var(--dim)"></span>
+        </div>
+        <div class="priority-chips" id="priority-chips"></div>
+      </div>
+
+      <!-- 🏁 今日やること（タスクカード） -->
+      <div id="today-tasks-section" class="hidden">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <h2>🏁 今日やること</h2>
+          <span id="today-tasks-all-done" class="hidden"
+            style="font-size:12px;color:#4ade80;font-weight:700;">🎉 全完了！</span>
+        </div>
+        <div id="today-tasks-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+    </div><!-- /ls-left -->
+
+    <!-- ━━ RIGHT COLUMN ━━ -->
+    <div id="ls-right">
+
+      <!-- 📋 今夜の学習指示 -->
+      <div id="study-guide-section" class="hidden">
+        <h2 style="margin-bottom:5px">📋 今夜の学習指示</h2>
+        <div class="ctx-card" style="border-left:4px solid #fbbf24; padding:10px 12px">
+          <div class="guide-body" id="study-guide-body"></div>
+          <div class="guide-toggle" id="guide-toggle-btn">▼ もっと見る</div>
+        </div>
+      </div>
+
+      <!-- 📚 問題振り返り -->
+      <div id="review-section" class="hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <h2>📚 今日の問題振り返り</h2>
+          <span id="review-count" style="font-size:11px;color:var(--dim)"></span>
+        </div>
+        <div id="review-list"></div>
+      </div>
+
+      <!-- 今日の1問（クイズ） -->
+      <div id="quiz-section" class="hidden">
+        <h2 style="margin-bottom:5px">🧠 今日の1問</h2>
+        <div class="ctx-card" id="quiz-card">
+          <div id="quiz-question" style="font-size:14px;line-height:1.6;color:var(--text)"></div>
+          <div id="quiz-hint" class="hidden"
+            style="margin-top:8px;font-size:12px;color:var(--dim);border-left:3px solid #3b82f6;padding-left:8px"></div>
+          <button id="quiz-show-hint-btn" class="sec-btn" style="margin-top:8px;font-size:12px">💡 ヒントを見る</button>
+        </div>
+      </div>
+
+      <!-- 試験ニュース -->
+      <div id="news-section" class="hidden">
+        <h2 style="margin-bottom:5px">📰 試験ニュース</h2>
+        <div class="ctx-card">
+          <div id="news-list"></div>
+        </div>
+      </div>
+
+      <!-- 重要条文 -->
+      <div id="articles-section" class="hidden">
+        <h2 style="margin-bottom:5px">📖 重要条文</h2>
+        <div class="ctx-card">
+          <div id="articles-list" style="line-height:2.2;font-size:13px"></div>
+        </div>
+      </div>
+
+      <!-- 繰り返し苦手論点 -->
+      <div id="persistent-weak-section" class="hidden">
+        <h2 style="margin-bottom:5px">🔴 繰り返し苦手論点</h2>
+        <div class="ctx-card" style="border-left:4px solid #ef4444">
+          <div id="persistent-weak-list"></div>
+        </div>
+      </div>
+
+      <!-- スペーシング復習 -->
+      <div id="spacing-section" class="hidden">
+        <h2 style="margin-bottom:5px">🔄 スペーシング復習</h2>
+        <div class="spacing-list" id="spacing-list"></div>
+      </div>
+
+    </div><!-- /ls-right -->
+
+    <!-- ━━ BOTTOM (full width) ━━ -->
+    <div id="ls-bottom">
+
+      <!-- スケジュール（折りたたみ） -->
+      <div id="sched-section" class="hidden">
+        <button id="sched-toggle">📅 今日のスケジュール <span id="sched-arrow">▼</span></button>
+        <div id="sched-body"></div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:6px">
+        <button class="sec-btn" id="refresh-ctx-btn">🔄 再読み込み</button>
+        <button class="primary-btn" id="start-btn" style="flex:2" disabled>復習を開始する →</button>
+      </div>
+      <p style="font-size:11px;color:var(--dim);text-align:center;margin-top:4px">
+        ※ 毎朝7時にMacから自動更新されます
+      </p>
+
+    </div><!-- /ls-bottom -->
+  </div><!-- /start-screen -->
+
+  <!-- ③ チャット -->
+  <div id="chat-area" class="hidden"></div>
+
+  <!-- クイック返信 -->
+  <div id="quick" class="hidden">
+    <button class="qb" data-m="次の問題をお願いします">▶ 次の問題</button>
+    <button class="qb" id="qb-2択" data-m="同じ問題を2択（A/Bの選択肢形式）で出してください">🅰 2択</button>
+    <button class="qb" data-m="もう一度説明してください">🔁 もう一度</button>
+    <button class="qb" data-m="ヒントをください">💡 ヒント</button>
+    <button class="qb" data-m="スペーシング復習の問題を出してください">🔄 復習問題</button>
+    <button class="qb" data-m="終わります">🏁 終了</button>
+  </div>
+
+  <!-- 入力欄 -->
+  <div id="input-row" class="hidden">
+    <textarea id="msg-in" placeholder="回答を入力..." rows="1"></textarea>
+    <button id="send" disabled>
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// 定数
+// ══════════════════════════════════════════════════
+
+// 曜日 → 科目（JS getDay: 0=日,1=月,...,6=土）
+const WEEKLY = {0:"商法",1:"憲法",2:"民法",3:"刑法",4:"行政法",5:"民訴法",6:"刑訴法"};
+
+// Groq（完全無料、OpenAI互換）
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+
+// GitHub Raw — 毎回最新を取得（キャッシュバスター付き）
+const CTX_URL = () =>
+  `https://raw.githubusercontent.com/osamuina8008/business-tools/main/study/context.json?t=${Date.now()}`;
+
+// ══════════════════════════════════════════════════
+// 状態
+// ══════════════════════════════════════════════════
+let apiKey  = localStorage.getItem("groq_api_key") || "";
+let subject = WEEKLY[new Date().getDay()];
+let ctx     = null;   // GitHubから取得したコンテキスト
+let history = [];
+let busy    = false;
+
+// ══════════════════════════════════════════════════
+// DOM
+// ══════════════════════════════════════════════════
+const $  = id => document.getElementById(id);
+const setupScreen = $("setup-screen");
+const startScreen = $("start-screen");
+const chatArea    = $("chat-area");
+const quick       = $("quick");
+const inputRow    = $("input-row");
+
+// ══════════════════════════════════════════════════
+// 初期化
+// ══════════════════════════════════════════════════
+// テーマ初期化
+function applyTheme(isLight) {
+  document.body.classList.toggle("light", isLight);
+  $("theme-btn").textContent = isLight ? "☀️" : "🌙";
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+}
+$("theme-btn").addEventListener("click", () => {
+  applyTheme(!document.body.classList.contains("light"));
+});
+
+function init() {
+  const now  = new Date();
+  const days = ["日","月","火","水","木","金","土"];
+  $("hd-date").textContent = `${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）`;
+  $("hd-subj").textContent = subject;
+  highlightSubj(subject);
+
+  // 保存済みテーマを適用
+  applyTheme(localStorage.getItem("theme") === "light");
+
+  // 起動時にデフォルト科目のワンポイントを表示
+  showTip(subject);
+
+  if (!apiKey) {
+    show(setupScreen);
+  } else {
+    show(startScreen);
+    loadContext();
+  }
+}
+
+function show(el) {
+  [setupScreen, startScreen, chatArea, quick, inputRow].forEach(e => e.classList.add("hidden"));
+  el.classList.remove("hidden");
+}
+function showChat() {
+  chatArea.classList.remove("hidden");
+  quick.classList.remove("hidden");
+  inputRow.classList.remove("hidden");
+  [setupScreen, startScreen].forEach(e => e.classList.add("hidden"));
+}
+
+// ══════════════════════════════════════════════════
+// コンテキスト読み込み（GitHub Raw）
+// ══════════════════════════════════════════════════
+async function loadContext() {
+  // リセット
+  $("status-dot").className = "status-dot gray";
+  $("status-text").textContent = "読み込み中...";
+  $("start-btn").disabled = true;
+  $("kw-list").innerHTML = "";
+  $("wq-list").innerHTML = "";
+  $("spacing-list").innerHTML = "";
+  $("today-tasks-list").innerHTML = "";
+  $("priority-chips").innerHTML = "";
+  $("review-list").innerHTML = "";
+  $("study-guide-body").innerHTML = "";
+  ["spacing-section","quiz-section","articles-section","persistent-weak-section",
+   "today-tasks-section","priority-chips-section","news-section",
+   "study-guide-section","review-section"].forEach(id =>
+    $(id).classList.add("hidden"));
+
+  // Mac ローカル API（Wi-Fi内のみ）
+  const MAC_API    = "http://192.168.0.8:5001/api/checkin";
+  const today0Str  = new Date().toISOString().slice(0, 10);
+  const CHECKIN_KEY = "checkins_" + today0Str;
+
+  async function postCheckin(subj, status, action, checked) {
+    try {
+      await fetch(MAC_API, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({subject: subj, status, action, checked}),
+        signal: AbortSignal.timeout(3000)
+      });
+    } catch (_) {}
+  }
+  function saveCheckinLocal(subj, checked) {
+    const s = JSON.parse(localStorage.getItem(CHECKIN_KEY) || "{}");
+    s[subj] = checked;
+    localStorage.setItem(CHECKIN_KEY, JSON.stringify(s));
+  }
+  function loadCheckinLocal() {
+    return JSON.parse(localStorage.getItem(CHECKIN_KEY) || "{}");
+  }
+
+  try {
+    const res = await fetch(CTX_URL());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    ctx = await res.json();
+
+    // ─ 科目・ステータス ─
+    if (ctx.subject) {
+      subject = ctx.subject;
+      $("hd-subj").textContent = subject;
+      highlightSubj(subject);
+    }
+    $("today-subj").textContent = subject;
+    const isToday = ctx.date === today0Str;
+    $("status-dot").className = "status-dot" + (isToday ? "" : " gray");
+    $("status-text").textContent = isToday
+      ? `✅ 取得済み（${(ctx.updated_at || "").slice(11,16)} 更新）`
+      : `⚠️ ${ctx.date} のデータ（本日未更新）`;
+
+    // ─ 今日のログサマリー ─
+    const logs = ctx.today_logs || [];
+    if (logs.length > 0) {
+      const total = logs.reduce((s, l) => s + (l.questions_count || 0), 0);
+      const und = logs.map(l => l.understanding).filter(Boolean).join("・");
+      $("today-log-summary").textContent =
+        `${total > 0 ? total + "問" : ""}${und ? "　" + und : ""}`;
+    }
+
+    // ─ キーワード（Bear検索リンク） ─
+    (ctx.keywords || []).forEach(kw => {
+      const a = document.createElement("a");
+      a.className = "kw-chip";
+      a.textContent = "📖 " + kw;
+      a.href = "bear://x-callback-url/search?term=" + encodeURIComponent(kw);
+      $("kw-list").appendChild(a);
+    });
+
+    // ─ 弱点トピック（チェック式） ─
+    const JUNK = ["能力不足","判断迷い","判断ミス","読解エラー","理解不十分","未整理","エラー","得点喪失"];
+    const cleanTopic = t => t.replace(/\*\*/g,"").replace(/^[\s・]+/,"").trim();
+    const wrongItems = (ctx.wrong_topics || []).map(cleanTopic)
+      .filter(t => t.length >= 2 && !JUNK.some(j => t.includes(j)));
+    const checkedKey = "wq_checked_" + (ctx.date || "");
+    const checkedSet = new Set(JSON.parse(localStorage.getItem(checkedKey) || "[]"));
+    wrongItems.slice(0,8).forEach(t => {
+      const btn = document.createElement("span");
+      btn.className = "wq-chip" + (checkedSet.has(t) ? " checked" : "");
+      btn.textContent = (checkedSet.has(t) ? "✅ " : "⚠️ ") + t;
+      btn.addEventListener("click", () => {
+        const on = checkedSet.has(t);
+        if (on) { checkedSet.delete(t); btn.classList.remove("checked"); btn.textContent = "⚠️ " + t; }
+        else {
+          checkedSet.add(t); btn.classList.add("checked"); btn.textContent = "✅ " + t;
+          setTimeout(() => { window.location.href = "bear://x-callback-url/search?term=" + encodeURIComponent(t); }, 180);
+        }
+        localStorage.setItem(checkedKey, JSON.stringify([...checkedSet]));
+        const all = $("wq-list").querySelectorAll(".wq-chip");
+        const done = $("wq-list").querySelectorAll(".wq-chip.checked");
+        if (all.length && all.length === done.length) showAllChecked();
+      });
+      $("wq-list").appendChild(btn);
+    });
+
+    // ─ ⚡ 最優先チップ ─
+    const tasks = ctx.today_tasks || [];
+    if (tasks.length > 0) {
+      const lateCount = tasks.filter(t => t.status === "遅れ").length;
+      const weekCount = tasks.filter(t => t.status === "今週").length;
+      $("priority-summary").textContent =
+        `遅れ ${lateCount}科目 | 今週枠 ${weekCount}科目`;
+      tasks.forEach(task => {
+        const chip = document.createElement("span");
+        chip.className = `pri-chip ${task.status === "遅れ" ? "late" : "week"}`;
+        chip.textContent = `${task.subject}・${task.status}`;
+        $("priority-chips").appendChild(chip);
+      });
+      $("priority-chips-section").classList.remove("hidden");
+    }
+
+    // ─ 🏁 今日やること（リッチタスクカード） ─
+    if (tasks.length > 0) {
+      $("today-tasks-section").classList.remove("hidden");
+      const savedCheckins = loadCheckinLocal();
+      const list = $("today-tasks-list");
+
+      tasks.forEach(task => {
+        const isDone = savedCheckins[task.subject] === true;
+        const kindCls = task.status === "遅れ" ? "late" : "week";
+        const card = document.createElement("div");
+        card.className = `task-card ${kindCls}${isDone ? " done" : ""}`;
+
+        const sitHtml = task.situation
+          ? `<div class="tc-sit">📊 現状：${task.situation}</div>` : "";
+        const themeHtml = task.theme
+          ? `<div class="tc-theme">🎯 テーマ：${task.theme}</div>` : "";
+        const actionHtml = task.action
+          ? `<div class="tc-action">📝 今日の一手：${task.action}</div>` : "";
+
+        card.innerHTML = `
+          <div class="tc-head">
+            <span class="tc-subj">${task.subject}</span>
+            <span class="tc-badge ${kindCls}">${task.status}</span>
+          </div>
+          ${sitHtml}${themeHtml}${actionHtml}
+          <div class="tc-check-row">
+            <span class="tc-check-icon">${isDone ? "✅" : "⬜"}</span>
+            <span class="tc-check-label">${isDone ? "完了済み" : "タップして完了"}</span>
+          </div>`;
+
+        card.querySelector(".tc-check-row").addEventListener("click", () => {
+          const nowDone = card.querySelector(".tc-check-icon").textContent === "✅";
+          const next = !nowDone;
+          card.querySelector(".tc-check-icon").textContent = next ? "✅" : "⬜";
+          card.querySelector(".tc-check-label").textContent = next ? "完了済み" : "タップして完了";
+          card.classList.toggle("done", next);
+          saveCheckinLocal(task.subject, next);
+          postCheckin(task.subject, task.status, task.action, next);
+          const allCards = list.querySelectorAll(".task-card");
+          const allDone  = [...allCards].every(c => c.classList.contains("done"));
+          $("today-tasks-all-done").classList.toggle("hidden", !allDone);
+        });
+        list.appendChild(card);
+      });
+
+      // 初期完了チェック
+      if (tasks.every(t => savedCheckins[t.subject] === true))
+        $("today-tasks-all-done").classList.remove("hidden");
+    }
+
+    // ─ 📋 今夜の学習指示 ─
+    if (ctx.today_study_guide) {
+      $("study-guide-section").classList.remove("hidden");
+      // markdown の **bold** を <strong> に変換して表示
+      const guideHtml = ctx.today_study_guide
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
+      $("study-guide-body").innerHTML = guideHtml;
+      // 長い場合は折りたたみ
+      const guideEl = $("study-guide-body");
+      if (guideEl.scrollHeight > 160) {
+        guideEl.style.maxHeight = "160px";
+        const btn = $("guide-toggle-btn");
+        btn.style.display = "block";
+        let expanded = false;
+        btn.addEventListener("click", () => {
+          expanded = !expanded;
+          guideEl.style.maxHeight = expanded ? "none" : "160px";
+          btn.textContent = expanded ? "▲ 閉じる" : "▼ もっと見る";
+        });
+      } else {
+        $("guide-toggle-btn").style.display = "none";
+      }
+    }
+
+    // ─ 📚 問題振り返り ─
+    const reviewItems = ctx.today_review_items || [];
+    if (reviewItems.length > 0) {
+      $("review-section").classList.remove("hidden");
+      $("review-count").textContent = `${reviewItems.length}問`;
+      const rl = $("review-list");
+      reviewItems.forEach((item, idx) => {
+        const panelId = `rp-${idx}`;
+        const div = document.createElement("div");
+        div.className = "review-item";
+
+        // 正誤を色分け（ア：× → 赤, ア：○ → 緑）
+        const ketsuHtml = (item.ketsuron || "").split(/[　\s]+/).slice(0,4)
+          .map(s => {
+            const wrong = /×|2（誤|誤り/.test(s);
+            const right = /○|1（正|正しい/.test(s);
+            const col = wrong ? "#f87171" : right ? "#4ade80" : "#94a3b8";
+            return `<span style="color:${col};font-size:11px;margin-right:4px">${s.replace(/[アイウエ]/,'<b>$&</b>')}</span>`;
+          }).join("");
+
+        div.innerHTML = `
+          <div class="review-item-head" onclick="toggleReviewPanel('${panelId}',this)">
+            <span class="review-q">Q${item.q_num}</span>
+            <span class="review-ketsu">${ketsuHtml || item.ketsuron || ""}</span>
+            <span class="review-arrow" id="${panelId}-arr">▼</span>
+          </div>
+          <div class="review-item-body" id="${panelId}">
+            <div class="review-axis">${item.axis || item.theme || ""}</div>
+            <div class="review-ketsu-detail">${item.ketsuron || ""}</div>
+            <a class="review-bear-btn" href="bear://x-callback-url/search?term=${encodeURIComponent("Q"+item.q_num)}">🐻 BearでQ${item.q_num}を確認</a>
+          </div>`;
+        rl.appendChild(div);
+      });
+    }
+
+    // ─ 🧠 今日の1問 ─
+    if (ctx.quiz_question) {
+      $("quiz-section").classList.remove("hidden");
+      $("quiz-question").textContent = ctx.quiz_question;
+      const hintEl  = $("quiz-hint");
+      const hintBtn = $("quiz-show-hint-btn");
+      hintEl.textContent = "ヒント：" + (ctx.quiz_answer_hint || "—");
+      hintBtn.addEventListener("click", () => {
+        hintEl.classList.remove("hidden");
+        hintBtn.classList.add("hidden");
+      });
+    }
+
+    // ─ 📰 試験ニュース（news_feed 優先、なければ articles） ─
+    const CAT_BADGE = {
+      creator: ["要チェック", "check"],
+      prep:    ["予備校",   "yoko"],
+      exam:    ["試験情報", "exam"],
+      news:    ["ニュース", "news"],
+    };
+    const newsFeed = ctx.news_feed || [];
+    const fallbackArticles = ctx.articles || [];
+    if (newsFeed.length > 0) {
+      $("news-section").classList.remove("hidden");
+      $("news-list").innerHTML = newsFeed.map(item => {
+        const [badgeLabel, badgeCls] = CAT_BADGE[item.category] || ["", ""];
+        const badge = badgeLabel
+          ? `<span class="news-badge ${badgeCls}">${badgeLabel}</span>` : "";
+        const link = item.url
+          ? `<a class="news-title" href="${item.url}" target="_blank">${item.title}</a>`
+          : `<span class="news-title">${item.title}</span>`;
+        const src = item.source
+          ? `<span class="news-src">${item.source}</span>` : "";
+        return `<div class="news-item">${badge}${link}${src ? "<br>" + src : ""}</div>`;
+      }).join("");
+    } else if (fallbackArticles.length > 0) {
+      $("news-section").classList.remove("hidden");
+      $("news-list").innerHTML = fallbackArticles.map(a =>
+        `<div class="news-item"><span class="news-title">${a}</span></div>`
+      ).join("");
+    }
+
+    // ─ 📖 重要条文（Slackがあれば） ─
+    if (fallbackArticles.length > 0 && newsFeed.length > 0) {
+      // articles（Slack）があれば articles-section に表示
+      $("articles-section").classList.remove("hidden");
+      $("articles-list").innerHTML = fallbackArticles
+        .map(a => `<div style="padding:2px 0">📌 <strong>${a}</strong></div>`).join("");
+    }
+
+    // ─ 🔴 繰り返し苦手論点 ─
+    if ((ctx.persistent_weak || []).length > 0) {
+      $("persistent-weak-section").classList.remove("hidden");
+      $("persistent-weak-list").innerHTML = ctx.persistent_weak.map(p =>
+        `<div style="padding:3px 0;font-size:13px">
+          <span style="color:#ef4444;font-weight:700">${p.keyword}</span>
+          <span style="font-size:11px;color:var(--dim);margin-left:6px">${p.count}回出現</span>
+          ${p.subject ? `<span style="font-size:10px;color:var(--dim);margin-left:4px">(${p.subject})</span>` : ""}
+        </div>`
+      ).join("");
+    }
+
+    // ─ 📅 スケジュール ─
+    if ((ctx.today_schedule || []).length > 0) {
+      $("sched-section").classList.remove("hidden");
+      const body = $("sched-body");
+      body.innerHTML = "";
+      const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+      ctx.today_schedule.forEach((e, i) => {
+        const [h, m] = e.time.split(":").map(Number);
+        const eMin = h*60+m;
+        const nextMin = ctx.today_schedule[i+1]
+          ? (() => { const [nh,nm]=ctx.today_schedule[i+1].time.split(":").map(Number); return nh*60+nm; })()
+          : eMin+60;
+        const isCurrent = nowMin >= eMin && nowMin < nextMin;
+        const row = document.createElement("div");
+        row.className = "sched-row" + (isCurrent ? " now" : "");
+        row.innerHTML = `<span class="sched-time">${e.time}</span><span class="sched-act">${isCurrent ? "▶ " : ""}${e.activity}</span>`;
+        body.appendChild(row);
+      });
+      const nowRow = body.querySelector(".now");
+      if (nowRow) setTimeout(() => nowRow.scrollIntoView({block:"center"}), 100);
+    }
+
+    // ─ 🔄 スペーシング復習 ─
+    const today0 = new Date(); today0.setHours(0,0,0,0);
+    const daysAgoLabel = dateStr => {
+      const d = new Date(dateStr); d.setHours(0,0,0,0);
+      const n = Math.round((today0 - d) / 86400000);
+      return n === 0 ? "今日" : n === 1 ? "昨日" : n + "日前";
+    };
+    const validItems = (ctx.spacing_items || []).filter(it =>
+      it.subject && it.subject !== "—" && (it.keywords || []).length > 0);
+    if (validItems.length > 0) {
+      $("spacing-section").classList.remove("hidden");
+      validItems.forEach((item, idx) => {
+        const el = document.createElement("div");
+        el.className = "sp-item";
+        const dLabel = item.interval_label || daysAgoLabel(item.date);
+        const kwsHtml = (item.keywords || []).map(k =>
+          `<a class="sp-kw-btn" href="bear://x-callback-url/search?term=${encodeURIComponent(k)}">🐻 ${k}</a>`
+        ).join("");
+        const bearDateUrl = `bear://x-callback-url/search?term=${encodeURIComponent(item.date)}`;
+        const panelId = `cp-${idx}`;
+        const claudeNotes = item.claude_notes || [];
+        let claudePanelHtml = "";
+        if (claudeNotes.length > 0) {
+          claudePanelHtml = `<div class="claude-panel" id="${panelId}">`;
+          claudeNotes.forEach(note => {
+            const bearNoteUrl = `bear://x-callback-url/search?term=${encodeURIComponent(note.title)}`;
+            claudePanelHtml += `
+              <div class="claude-note-item">
+                <div class="claude-note-title">
+                  <span>📝 ${note.title}</span>
+                  <a class="bear-open-btn" href="${bearNoteUrl}">🐻 Bearで開く</a>
+                </div>
+                <div class="claude-note-body">${note.content.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+              </div>`;
+          });
+          claudePanelHtml += `</div>`;
+        }
+        const claudeBtnHtml = claudeNotes.length > 0
+          ? `<span class="sp-claude-btn" onclick="toggleClaudePanel('${panelId}',this)">🤖 Claudeメモ▼</span>`
+          : "";
+        el.innerHTML = `
+          <div class="sp-left">
+            <div><span class="sp-subj">${item.subject}</span>
+              <span style="font-size:11px;color:var(--dim);margin-left:6px">${item.date}</span>
+            </div>
+            <div class="sp-meta">${dLabel}に学習 → 今日復習推奨${item.questions_count > 0 ? "　" + item.questions_count + "問" : ""}</div>
+            <div class="sp-kws">${kwsHtml}</div>
+            <div class="sp-action-row">
+              <a class="sp-note-btn" href="${bearDateUrl}">📓 ${item.date}のノート</a>
+              ${claudeBtnHtml}
+            </div>
+            ${claudePanelHtml}
+          </div>`;
+        $("spacing-list").appendChild(el);
+      });
+    }
+
+  } catch(e) {
+    ctx = null;
+    $("today-subj").textContent = subject;
+    $("status-dot").className = "status-dot gray";
+    $("status-text").textContent = "⚠️ データなし（基本問題モードで開始）";
+  }
+
+  $("start-btn").disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// 科目バー
+// ══════════════════════════════════════════════════
+// 全弱点チェック完了演出
+function showAllChecked() {
+  const existing = document.getElementById("all-checked-msg");
+  if (existing) return;
+  const msg = document.createElement("div");
+  msg.id = "all-checked-msg";
+  msg.style.cssText = `
+    text-align:center; padding:10px; margin-top:6px;
+    background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.4);
+    border-radius:10px; color:#4ade80; font-size:14px; font-weight:600;
+    animation: fadeIn .4s ease;
+  `;
+  msg.textContent = "🎉 今日の弱点を全部確認！";
+  $("wq-list").after(msg);
+  setTimeout(() => msg.remove(), 3000);
+}
+
+// 問題振り返りパネルのToggle
+function toggleReviewPanel(id, headEl) {
+  const body = document.getElementById(id);
+  const arr  = document.getElementById(id + "-arr");
+  if (!body) return;
+  const isOpen = body.classList.toggle("open");
+  if (arr) { arr.textContent = isOpen ? "▲" : "▼"; arr.classList.toggle("open", isOpen); }
+}
+
+// ClaudeメモパネルのToggle
+function toggleClaudePanel(id, btn) {
+  const panel = document.getElementById(id);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle("open");
+  btn.textContent = isOpen ? "🤖 Claudeメモ▲" : "🤖 Claudeメモ▼";
+}
+
+// ══════════════════════════════════════════════════
+// 科目ワンポイントアドバイス データ
+// ══════════════════════════════════════════════════
+const TIPS = {
+  "憲法": [
+    { title:"💡 違憲審査基準の選び方", body:"精神的自由（表現・思想）→ 厳格審査。経済的自由（職業選択）→ 合理性審査。身体的自由 → 中間審査が多数説。まず権利の性質を特定することが最初の一歩。", kw:"違憲審査基準" },
+    { title:"💡 「処分性」の判断ポイント", body:"行政事件訴訟法3条2項の処分性は「公権力の主体たる国または公共団体の行為」「直接法的効果」の2要件。抗告訴訟の入口なので確実に。", kw:"処分性" },
+    { title:"💡 統治行為論の限界", body:"高度に政治的な国家行為（条約・衆議院解散）は司法審査になじまないとされるが、基本的人権を侵害する場合は例外。砂川事件が典型例。", kw:"統治行為" },
+    { title:"💡 法の下の平等（14条）", body:"「等しいものを等しく」扱うのが原則。区別が合理的かを問う。人種・信条・性別・門地は列挙事由として特に注意が必要。", kw:"法の下の平等" },
+    { title:"💡 二重の基準論", body:"精神的自由は民主主義の前提→違憲推定・厳格審査。経済的自由は事後救済可能→合憲推定・緩やかな審査。予備試験で頻出の論証枠組み。", kw:"二重の基準" },
+  ],
+  "民法": [
+    { title:"💡 意思表示の瑕疵（93〜96条）", body:"心裡留保→善意の第三者に対抗不可。虚偽表示→善意の第三者に対抗不可。錯誤→要素の錯誤で取消可。詐欺→取消可・善意無過失の第三者に対抗不可。", kw:"意思表示" },
+    { title:"💡 時効完成後の信義則", body:"消滅時効完成後に時効援用しないと誤信させた場合は信義則上援用が制限される。最判S41.4.20が基礎。予備では「時効の援用と信義則」として出題される。", kw:"消滅時効" },
+    { title:"💡 根抵当権 vs 抵当権", body:"抵当権は特定債権を担保。根抵当権は極度額の範囲で不特定多数の債権を担保（398条の2）。商取引継続時に活用。元本確定手続きが重要論点。", kw:"根抵当権" },
+    { title:"💡 危険負担（536条）", body:"債権者主義が原則→特定物売買で目的物が滅失しても代金支払義務は残る。2020年改正で買主に反対給付拒絶権（536条1項）。改正前後で結論が変わる注意点。", kw:"危険負担" },
+    { title:"💡 不法行為の「過失」判断", body:"予見可能性（結果の予見）＋回避可能性（結果の回避）が「過失」の2要素。医療・交通など類型ごとに判例の注意義務水準が違う点に注意。", kw:"過失" },
+  ],
+  "刑法": [
+    { title:"💡 共同正犯と幇助の区別", body:"「正犯意思（自己の犯罪として行う意思）」があれば共同正犯、なければ幇助。利益の有無・関与の程度・主導性が判断要素。判例は客観説寄り。", kw:"共同正犯" },
+    { title:"💡 不作為犯の作為義務", body:"①法令②契約③先行行為④条理から作為義務を導く。保護責任者遺棄（218条）との区別も重要。不作為による殺人・放火は論文頻出。", kw:"不作為犯" },
+    { title:"💡 正当防衛の要件", body:"①急迫性②不正の侵害③防衛するため④やむを得ずした行為。急迫性は「侵害の危険が緊迫している」こと。自招侵害・過剰防衛との区別も押さえる。", kw:"正当防衛" },
+    { title:"💡 故意の認識対象", body:"故意（38条）は構成要件に該当する事実の認識・認容。事実の錯誤→故意を阻却。法律の錯誤（違法性の錯誤）→原則故意あり・例外的に責任阻却。", kw:"故意" },
+    { title:"💡 窃盗と横領の区別", body:"窃盗＝他人占有物を奪取。横領＝自己占有の他人物を領得。占有の帰属が分水嶺。委託物横領（252条）と業務上横領（253条）の区別も頻出。", kw:"窃盗横領" },
+  ],
+  "行政法": [
+    { title:"💡 申請に対する処分（標準処理期間）", body:"行政手続法6条：標準処理期間は「努力義務」。期間徒過でも違法にならないが、不作為の違法確認訴訟の対象にはなる（行訴3条5項）。", kw:"標準処理期間" },
+    { title:"💡 取消訴訟の出訴期間", body:"処分を知った日から6か月（行訴14条1項）、処分から1年（同条2項）の短期に注意。正当な理由があれば延長可。出訴期間徒過は却下事由。", kw:"出訴期間" },
+    { title:"💡 裁量権逸脱・濫用の4類型", body:"①事実誤認②他事考慮③比例原則違反④平等原則違反。判例は「社会観念上著しく妥当を欠く」かを基準に裁量審査する。", kw:"裁量権" },
+    { title:"💡 国家賠償法1条と2条の違い", body:"1条：公権力の行使（作為・不作為の違法）→過失必要。2条：公の営造物の設置管理の瑕疵→無過失責任。道路・河川・学校設備は2条が典型。", kw:"国家賠償" },
+    { title:"💡 義務付け訴訟の類型", body:"非申請型（3条6項1号）→重大明白な損害＋補充性。申請型（同2号）→申請拒否・不作為に対して。仮の義務付けとセットで論じる。", kw:"義務付け訴訟" },
+  ],
+  "民訴法": [
+    { title:"💡 既判力の「時的限界」", body:"標準時（口頭弁論終結時）前に存在した事由は遮断される。時効の援用・相殺の抗弁など、標準時前に主張できたのに主張しなかった事由は再訴不可。", kw:"既判力" },
+    { title:"💡 訴訟物の特定方法", body:"給付訴訟・確認訴訟・形成訴訟で異なる。請求の趣旨（どんな判決を求めるか）＋請求原因（法的根拠）で特定。重複起訴（142条）との関係も重要。", kw:"訴訟物" },
+    { title:"💡 弁論主義の3つのテーゼ", body:"①主要事実は当事者の主張が必要②自白（179条）は裁判所を拘束③裁判所は当事者の提出した証拠のみ使える。間接事実・補助事実は弁論主義の対象外。", kw:"弁論主義" },
+    { title:"💡 控訴と上告の違い", body:"控訴→事実審（第2審）。上告→法律審（第3審）。上告受理申立（318条）は「法令解釈の重要問題」が要件。判例違反は上告理由（312条2項）。", kw:"控訴上告" },
+    { title:"💡 仮処分の保全要件", body:"被保全権利の疎明＋保全の必要性（本案判決前に権利実現が困難になるおそれ）の2要件。民事保全法23条2項の断行仮処分は高い保全の必要性が要求される。", kw:"仮処分" },
+  ],
+  "刑訴法": [
+    { title:"💡 令状主義の例外（令状なし捜索）", body:"①逮捕に伴う捜索（220条）②緊急逮捕（210条）に伴う捜索③同意検査。219条の令状取得が原則。令状なしの捜索・差押は違法収集証拠（排除法則）問題に連動。", kw:"令状主義" },
+    { title:"💡 自白法則（319条）と排除法則", body:"自白法則：任意性のない自白→証拠能力なし。違法収集証拠排除法則：違法な手続きで収集した証拠→重大な違法＋排除相当性の2要件（最判S53）。", kw:"自白法則" },
+    { title:"💡 伝聞法則と例外", body:"320条：伝聞証拠は原則禁止。321〜328条に例外（書面・録音・相手方が使う供述）。供述の「知覚→記憶→表現→叙述」どこかに誤りが入る危険を排除するため。", kw:"伝聞法則" },
+    { title:"💡 勾留の要件（60条）", body:"①罪を犯したことを疑うに足りる相当な理由②住所不定・罪証隠滅のおそれ・逃亡のおそれの少なくとも1つ。勾留期間は原則10日・延長10日（208条）。", kw:"勾留" },
+    { title:"💡 一事不再理効と既判力", body:"337条1号：確定判決があれば免訴。一事不再理効は確定した訴訟物の範囲に及ぶ。公訴事実の同一性（基本的事実同一説 vs 罪質同一説）が論点。", kw:"一事不再理" },
+  ],
+  "商法": [
+    { title:"💡 取締役の善管注意義務 vs 忠実義務", body:"善管注意義務（民法644条）：取締役として通常求められる注意義務。忠実義務（355条）：会社の利益を優先すべき義務。両者は同質説が判例・通説（最大判S45）。", kw:"善管注意義務" },
+    { title:"💡 株主代表訴訟（847条）のポイント", body:"①6か月以上の株式保有②会社に提訴請求→60日以内に会社が提訴しない場合に代表訴訟。勝訴しても利益は会社に帰属。費用は不当な訴えでなければ会社負担。", kw:"株主代表訴訟" },
+    { title:"💡 手形の文言性と要式性", body:"手形行為は厳格な要式性（手形法1条・75条の記載事項）＋文言性（記載された文言で権利内容が決まる）。白地手形の補充権消滅時効は3年（手形法77条）。", kw:"手形" },
+    { title:"💡 表見代表取締役（354条）", body:"「社長」「副社長」等の名称を与えた者が取引した場合、会社は善意の第三者に対抗できない。外観作出への会社の帰責性が根拠。悪意・重過失の第三者は保護されない。", kw:"表見代表取締役" },
+    { title:"💡 剰余金配当の財源規制", body:"分配可能額（461条）を超える配当→違法配当。取締役は連帯して会社に返還義務（462条）。分配可能額＝その他資本剰余金＋その他利益剰余金±調整額。", kw:"剰余金配当" },
+  ],
+};
+
+function showTip(subj) {
+  const tips = TIPS[subj];
+  if (!tips) { $("tip-panel").classList.add("hidden"); return; }
+  // 日付ベースでローテーション（毎日変わる）
+  const dayNum = Math.floor(Date.now() / 86400000);
+  const tip = tips[dayNum % tips.length];
+  $("tip-subject").textContent = `💡 ${subj} ワンポイント`;
+  $("tip-body").textContent = tip.body;
+  $("tip-bear").innerHTML = tip.kw
+    ? `<a style="font-size:11px;color:#93c5fd;text-decoration:none" href="bear://x-callback-url/search?term=${encodeURIComponent(tip.kw)}">🐻 「${tip.kw}」をBearで確認 →</a>`
+    : "";
+  // パネルを再描画してアニメ再生
+  const p = $("tip-panel");
+  p.classList.remove("hidden");
+  p.style.animation = "none";
+  requestAnimationFrame(() => { p.style.animation = ""; });
+}
+
+function highlightSubj(s) {
+  document.querySelectorAll(".sbt").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+}
+document.querySelectorAll(".sbt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    subject = btn.dataset.s;
+    $("hd-subj").textContent = subject;
+    highlightSubj(subject);
+    if (!chatArea.classList.contains("hidden")) {
+      send(`科目を${subject}に切り替えます。${subject}の問題を出してください。`);
+    } else {
+      $("today-subj").textContent = subject;
+      showTip(subject);  // スタート画面ではワンポイント表示
+    }
+  });
+});
+
+// ══════════════════════════════════════════════════
+// APIキー設定
+// ══════════════════════════════════════════════════
+$("api-key-input").addEventListener("input", e => {
+  $("save-key-btn").disabled = e.target.value.trim().length < 10;
+});
+$("save-key-btn").addEventListener("click", () => {
+  const k = $("api-key-input").value.trim();
+  if (!k) return;
+  apiKey = k;
+  localStorage.setItem("groq_api_key", k);
+  show(startScreen);
+  loadContext();
+});
+
+// ══════════════════════════════════════════════════
+// スタート画面
+// ══════════════════════════════════════════════════
+$("start-btn").addEventListener("click", startChat);
+$("refresh-ctx-btn").addEventListener("click", loadContext);
+
+async function startChat() {
+  history = [];
+  showChat();
+  await send("__start__");
+}
+
+// ══════════════════════════════════════════════════
+// システムプロンプト生成
+// ══════════════════════════════════════════════════
+function buildSystem() {
+  let todaySection = `## 今日の学習\n科目: ${subject}\n`;
+  if (ctx) {
+    if (ctx.keywords?.length) todaySection += `キーワード: ${ctx.keywords.join("、")}\n`;
+    const JUNK2 = ["知識不足","得点喪失","読解エラー","理解不十分","未整理","レベル","エラー"];
+    const wrongRef = (ctx.wrong_topics || []).filter(t => !JUNK2.some(j=>t.includes(j)) && t.length>=2);
+    if (wrongRef.length) todaySection += `要注意キーワード・条文: ${wrongRef.slice(0,5).join("、")}\n`;
+  }
+
+  let spacingSection = "";
+  if (ctx?.spacing_items?.length) {
+    spacingSection = "\n## スペーシング復習（今日やるべき過去の内容）\n";
+    ctx.spacing_items.forEach(item => {
+      spacingSection += `- ${item.interval_label} [${item.subject} ${item.questions_count}問]`;
+      if (item.keywords?.length) spacingSection += ` キーワード: ${item.keywords.join("、")}`;
+      if (item.wrong_qs?.length) spacingSection += ` 間違い: ${item.wrong_qs.slice(0,3).join("、")}`;
+      spacingSection += "\n";
+    });
+    spacingSection += "\n※ 今日の学習を先にやってから、スペーシング復習も含めること。";
+  }
+
+  return `あなたは司法試験予備試験の学習コーチです。ユーザーが今日学習した内容を会話形式で定着させます。
+
+${todaySection}${spacingSection || "\n（スペーシング復習なし）"}
+
+【ルール】
+- スマホ向け：返答は短く（3〜5文以内）
+- 難易度は「基本」から始める。知識の確認レベルで十分（応用・事例問題は不要）
+- 最初（start）では今日の内容を1文で紹介し、すぐ基本確認問題を1問出す
+- 問題形式：「❓ 〜は何ですか？」または「❓ 〜の要件を教えてください」
+- 「2択」と言われたら：「A: ○○　B: ××　どちらですか？」の形式で出し直す
+- 回答後：「✅ 正解！」または「💡 正解は〜」＋1〜2文の解説（条文番号を明記）
+- 次の問題はユーザーが求めた時だけ
+- キーワードや要注意条文を優先出題
+- 「終わります」と言われたらお疲れ様メッセージで締める`;
+}
+
+// ══════════════════════════════════════════════════
+// メッセージ送信
+// ══════════════════════════════════════════════════
+async function send(text) {
+  if (busy) return;
+  const isStart = text === "__start__";
+  const userText = isStart ? "start" : text.trim();
+  if (!userText) return;
+
+  if (!isStart) addBubble("user", userText);
+  $("msg-in").value = "";
+  autoResize();
+  $("send").disabled = true;
+  busy = true;
+
+  const typing = addTyping();
+
+  try {
+    if (!isStart) history.push({ role: "user", content: userText });
+
+    const messages = [
+      { role: "system", content: buildSystem() },
+      ...(isStart
+        ? [{ role: "user", content: "今日の復習を始めてください" }]
+        : history),
+    ];
+
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages,
+        max_tokens: 600,
+        temperature: 0.75,
+      }),
+    });
+    const data = await res.json();
+    typing.remove();
+
+    if (data.error) {
+      const msg = data.error.message || "不明なエラー";
+      addBubble("ai", `⚠️ エラー: ${msg}\n\nAPIキーをリセットして再設定してください（↺ボタン）`);
+    } else {
+      const reply = data.choices?.[0]?.message?.content || "（応答なし）";
+      addBubble("ai", reply);
+      if (isStart) history.push({ role: "user", content: "今日の復習を始めてください" });
+      history.push({ role: "assistant", content: reply });
+    }
+  } catch(e) {
+    typing.remove();
+    addBubble("ai", "⚠️ 通信エラー。インターネット接続を確認してください。");
+  }
+
+  busy = false;
+  $("send").disabled = ($("msg-in").value.trim() === "");
+  scrollBottom();
+}
+
+// ══════════════════════════════════════════════════
+// DOM ヘルパー
+// ══════════════════════════════════════════════════
+function addBubble(role, text) {
+  const row = document.createElement("div");
+  row.className = `msg ${role}`;
+  const bub = document.createElement("div");
+  bub.className = "bub";
+  bub.textContent = text;
+  const t = document.createElement("div");
+  t.className = "msg-time";
+  t.textContent = new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  row.appendChild(bub);
+  row.appendChild(t);
+  chatArea.appendChild(row);
+  scrollBottom();
+}
+function addTyping() {
+  const row = document.createElement("div");
+  row.className = "msg ai";
+  row.innerHTML = `<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  chatArea.appendChild(row);
+  scrollBottom();
+  return row;
+}
+function scrollBottom() {
+  requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+}
+function autoResize() {
+  const el = $("msg-in");
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
+}
+
+// ══════════════════════════════════════════════════
+// 入力 / クイック / リセット
+// ══════════════════════════════════════════════════
+$("msg-in").addEventListener("input", () => {
+  autoResize();
+  $("send").disabled = $("msg-in").value.trim() === "" || busy;
+});
+$("msg-in").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!$("send").disabled) send($("msg-in").value); }
+});
+$("send").addEventListener("click", () => { if (!$("send").disabled) send($("msg-in").value); });
+
+document.querySelectorAll(".qb").forEach(b => {
+  b.addEventListener("click", () => { if (!busy) send(b.dataset.m); });
+});
+
+// 文字サイズ切り替え（3段階: 15→18→21px）
+const SIZES = [15, 18, 21];
+let sizeIdx = parseInt(localStorage.getItem("font_size_idx") || "0");
+function applyFontSize() {
+  document.body.style.fontSize = SIZES[sizeIdx] + "px";
+  $("font-btn").textContent = sizeIdx === 0 ? "A" : sizeIdx === 1 ? "A+" : "A++";
+  $("font-btn").style.color = sizeIdx === 0 ? "" : "#93c5fd";
+}
+applyFontSize();
+$("font-btn").addEventListener("click", () => {
+  sizeIdx = (sizeIdx + 1) % SIZES.length;
+  localStorage.setItem("font_size_idx", sizeIdx);
+  applyFontSize();
+});
+
+$("sched-toggle").addEventListener("click", () => {
+  const body = $("sched-body");
+  const isOpen = body.classList.toggle("open");
+  $("sched-arrow").textContent = isOpen ? "▲" : "▼";
+});
+
+$("reset-btn").addEventListener("click", () => {
+  if (!confirm("リセットしますか？")) return;
+  const keepKey = confirm("APIキーはそのままにしますか？");
+  if (!keepKey) { localStorage.removeItem("groq_api_key"); apiKey = ""; }
+  history = [];
+  ctx = null;
+  chatArea.innerHTML = "";
+  init();
+});
+
+// ══════════════════════════════════════════════════
+// 起動
+// ══════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
