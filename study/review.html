@@ -1,0 +1,2300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="復習フィード">
+  <meta name="theme-color" content="#6d5dfc">
+  <link rel="apple-touch-icon" href="review-icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="review-icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="review-icon-512.png">
+  <title>予備試験 復習フィード</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* ── ライト（朝・デフォルト） ── */
+      --bg1:    #f3f1ff;
+      --bg2:    #fdf6f9;
+      --surf:   #ffffff;
+      --surf2:  #f6f5fb;
+      --border: #e7e3f5;
+      --text:   #1c1730;
+      --dim:    #7b7596;
+      --acc:    #6d5dfc;
+      --acc2:   #c44bd6;
+      --shadow: 0 6px 22px rgba(80,60,180,.10), 0 2px 6px rgba(80,60,180,.06);
+      --shadow-lg: 0 14px 40px rgba(90,60,190,.18);
+      --rad:    20px;
+      /* カテゴリ色 */
+      --c-review: #4f86ff;  --c-review-bg: rgba(79,134,255,.10);
+      --c-weak:   #ef4768;  --c-weak-bg:   rgba(239,71,104,.10);
+      --c-task:   #f5901e;  --c-task-bg:   rgba(245,144,30,.12);
+      --c-quiz:   #18b389;  --c-quiz-bg:   rgba(24,179,137,.12);
+      --c-tip:    #8b5cf6;  --c-tip-bg:    rgba(139,92,246,.10);
+      --c-read:   #0ea5b7;  --c-read-bg:   rgba(14,165,183,.10);
+    }
+    body.dark {
+      --bg1:    #0b1024;
+      --bg2:    #14102e;
+      --surf:   #1a2040;
+      --surf2:  #141a36;
+      --border: #2a3158;
+      --text:   #eef1ff;
+      --dim:    #9aa3c7;
+      --acc:    #8b7bff;
+      --acc2:   #e06ff0;
+      --shadow: 0 6px 22px rgba(0,0,0,.35);
+      --shadow-lg: 0 16px 44px rgba(0,0,0,.5);
+      --c-review-bg: rgba(79,134,255,.16);
+      --c-weak-bg:   rgba(239,71,104,.16);
+      --c-task-bg:   rgba(245,144,30,.18);
+      --c-quiz-bg:   rgba(24,179,137,.18);
+      --c-tip-bg:    rgba(139,92,246,.18);
+      --c-read-bg:   rgba(14,165,183,.18);
+    }
+
+    html, body { height: 100%; }
+    body {
+      background: linear-gradient(160deg, var(--bg1), var(--bg2));
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", sans-serif;
+      font-size: 15px; -webkit-font-smoothing: antialiased; overscroll-behavior: none;
+      line-height: 1.5;
+    }
+    #app { display: flex; flex-direction: column; height: 100dvh; max-width: 1100px; margin: 0 auto; }
+
+    /* ── ヘッダー ── */
+    header {
+      display: flex; align-items: center; gap: 10px;
+      padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+      flex-shrink: 0; }
+    .logo { font-size: 22px; }
+    header h1 { flex: 1; font-size: 16px; font-weight: 800; letter-spacing: .01em; }
+    header h1 small { display: block; font-size: 11px; font-weight: 500; color: var(--dim); margin-top: 1px; }
+    .icon-btn {
+      background: var(--surf); border: 1px solid var(--border); color: var(--dim);
+      font-size: 15px; cursor: pointer; padding: 0; width: 34px; height: 34px;
+      border-radius: 11px; display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow); flex-shrink: 0; transition: transform .12s; }
+    .icon-btn:active { transform: scale(.9); }
+    /* ボタンが1つ増えた分、狭い端末ではヘッダーを詰める */
+    @media (max-width: 400px) {
+      header { gap: 7px; padding-left: 12px; padding-right: 12px; }
+      header h1 { font-size: 15px; white-space: nowrap; }
+      .logo { font-size: 19px; }
+      .icon-btn { width: 30px; height: 30px; font-size: 14px; border-radius: 10px; }
+    }
+
+    /* ── 科目バー ── */
+    #subj-bar {
+      display: flex; gap: 7px; padding: 4px 16px 12px;
+      overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+    #subj-bar::-webkit-scrollbar { display: none; }
+    .sbt {
+      flex-shrink: 0; font-size: 13px; padding: 7px 15px; border-radius: 16px;
+      border: 1px solid var(--border); background: var(--surf); color: var(--dim);
+      cursor: pointer; font-weight: 600; box-shadow: var(--shadow); transition: all .15s;
+      -webkit-tap-highlight-color: transparent; }
+    .sbt:active { transform: scale(.94); }
+    .sbt.on {
+      background: linear-gradient(135deg, var(--acc), var(--acc2));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 6px 18px rgba(120,80,240,.35); }
+    .sbt.feat.on { background: linear-gradient(135deg, #f5901e, #ef4768); box-shadow: 0 6px 18px rgba(240,100,60,.35); }
+
+    /* ── スクロール本体 ── */
+    #scroll { flex: 1; overflow-y: auto; padding: 0 16px calc(24px + env(safe-area-inset-bottom));
+      -webkit-overflow-scrolling: touch; }
+
+    /* ── あいさつ ── */
+    .greet { margin: 2px 2px 14px; }
+    .greet .hi { font-size: 19px; font-weight: 800; letter-spacing: .01em; }
+    .greet .sub { font-size: 12.5px; color: var(--dim); margin-top: 3px; }
+    .greet .stats { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .stat-pill {
+      font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 13px;
+      background: var(--surf); border: 1px solid var(--border); box-shadow: var(--shadow);
+      display: inline-flex; align-items: center; gap: 5px; }
+    .stat-pill .num { color: var(--acc); }
+
+    /* ── カテゴリチップ ── */
+    #cat-bar { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 14px;
+      scrollbar-width: none; }
+    #cat-bar::-webkit-scrollbar { display: none; }
+    .cat-chip {
+      flex-shrink: 0; font-size: 12.5px; padding: 6px 13px; border-radius: 14px;
+      border: 1px solid var(--border); background: var(--surf); color: var(--dim);
+      cursor: pointer; font-weight: 700; box-shadow: var(--shadow); white-space: nowrap;
+      -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+    .cat-chip:active { transform: scale(.93); }
+    .cat-chip.on { background: var(--text); color: var(--surf); border-color: var(--text); }
+
+    /* ── HERO カード ── */
+    .hero {
+      position: relative; border-radius: 24px; padding: 20px 20px 18px; margin-bottom: 16px;
+      color: #fff; overflow: hidden; box-shadow: var(--shadow-lg); cursor: pointer;
+      background: linear-gradient(135deg, var(--acc), var(--acc2));
+      -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+    .hero:active { transform: scale(.985); }
+    .hero::after { content:""; position:absolute; right:-40px; top:-40px; width:170px; height:170px;
+      background: radial-gradient(circle, rgba(255,255,255,.22), transparent 70%); }
+    .hero .h-label { font-size: 11px; font-weight: 800; letter-spacing: .12em; opacity: .9; }
+    .hero .h-title { font-size: 20px; font-weight: 800; line-height: 1.4; margin: 8px 0 6px; position: relative; }
+    .hero .h-why { font-size: 13px; opacity: .92; line-height: 1.6; position: relative; }
+    .hero .h-go {
+      margin-top: 15px; display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,.95); color: #3b2a8c; font-weight: 800; font-size: 14.5px;
+      padding: 11px 20px; border-radius: 16px; border: none; cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,.18); position: relative; }
+    .hero .h-go:active { transform: scale(.96); }
+
+    /* ── セクション見出し ── */
+    .sec-h { font-size: 13px; font-weight: 800; color: var(--dim); margin: 6px 2px 9px;
+      display: flex; align-items: center; gap: 6px; }
+
+    /* ── カードグリッド ── */
+    #cards { display: grid; grid-template-columns: 1fr; gap: 11px; }
+    @media (min-width: 720px) { #cards { grid-template-columns: 1fr 1fr; } }
+
+    .card {
+      position: relative; background: var(--surf); border: 1px solid var(--border);
+      border-radius: var(--rad); padding: 14px 15px 13px; box-shadow: var(--shadow);
+      cursor: pointer; overflow: hidden; transition: transform .14s, box-shadow .14s;
+      -webkit-tap-highlight-color: transparent; display: flex; flex-direction: column; gap: 7px; }
+    .card:active { transform: scale(.98); }
+    .card::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background: var(--cc, var(--acc)); }
+    .card .c-top { display: flex; align-items: center; gap: 8px; }
+    .card .c-ico {
+      width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+      background: var(--ccbg, var(--surf2)); }
+    .card .c-badge { font-size: 10.5px; font-weight: 800; letter-spacing: .04em;
+      color: var(--cc, var(--acc)); }
+    .card .c-when { font-size: 11px; color: var(--dim); margin-left: auto; white-space: nowrap; }
+    .card .c-title { font-size: 14.5px; font-weight: 700; line-height: 1.45; color: var(--text); }
+    .card .c-why { font-size: 12px; color: var(--dim); line-height: 1.55; }
+    .card .c-kws { display: flex; flex-wrap: wrap; gap: 6px; }
+    .card .c-kw {
+      font-size: 11px; padding: 3px 10px; border-radius: 8px; text-decoration: none;
+      background: var(--surf); color: var(--cc, var(--acc)); font-weight: 600;
+      border: 0.5px solid var(--border);
+      max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card .c-ai { background: var(--ccbg, var(--surf2)); border-color: var(--cc, var(--acc)); }
+    .card .c-foot { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .card .c-go {
+      flex: 1; font-size: 13px; font-weight: 800; padding: 9px; border-radius: 13px; border: none;
+      background: var(--cc, var(--acc)); color: #fff; cursor: pointer; transition: transform .12s; }
+    .card .c-go:active { transform: scale(.96); }
+    .card .c-memo {
+      font-size: 12px; padding: 9px 12px; border-radius: 13px; text-decoration: none;
+      background: var(--surf2); border: 1px solid var(--border); color: var(--dim);
+      white-space: nowrap; font-weight: 600; }
+    .card .c-aim {
+      font-size: 11.5px; font-weight: 700; line-height: 1.5; color: var(--cc, var(--acc));
+      background: var(--ccbg, var(--surf2)); padding: 6px 10px; border-radius: 10px; }
+
+    /* ── 復習済みマーク ── */
+    .card.done { opacity: .72; }
+    .c-done, .h-done {
+      font-size: 10.5px; font-weight: 800; letter-spacing: .03em;
+      color: var(--c-quiz); background: var(--c-quiz-bg);
+      padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+    .h-done { color: #fff; background: rgba(255,255,255,.22); }
+    .stat-pill.tap { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .stat-pill.tap:active { transform: scale(.94); }
+    .stat-pill.done-pill .num { color: var(--c-quiz); }
+
+    /* ── 復習ログ オーバーレイ ── */
+    #log-ov {
+      position: fixed; inset: 0; z-index: 60; display: flex;
+      align-items: flex-end; justify-content: center;
+      background: rgba(20,16,40,.45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+      animation: fadeUp .18s ease both; }
+    .log-panel {
+      background: var(--surf); width: 100%; max-width: 560px; max-height: 82vh;
+      border-radius: 24px 24px 0 0; display: flex; flex-direction: column;
+      box-shadow: var(--shadow-lg); overflow: hidden; }
+    @media (min-width: 600px) { #log-ov { align-items: center; } .log-panel { border-radius: 24px; } }
+    .log-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px;
+      border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 800; }
+    .log-head span { flex: 1; }
+    #log-close { width: 32px; height: 32px; }
+    #log-list { flex: 1; overflow-y: auto; padding: 6px 14px 10px;
+      -webkit-overflow-scrolling: touch; }
+    .log-day { position: sticky; top: 0; background: var(--surf); z-index: 1;
+      font-size: 11.5px; font-weight: 800; color: var(--dim); padding: 10px 4px 6px; }
+    .log-item { display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 4px; border-bottom: 1px solid var(--border); }
+    .log-item:last-child { border-bottom: none; }
+    .li-ico { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .li-body { flex: 1; min-width: 0; }
+    .li-title { font-size: 13.5px; font-weight: 700; line-height: 1.45; }
+    .li-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .li-time { margin-left: auto; font-size: 11px; color: var(--dim); white-space: nowrap; padding-top: 2px; }
+    .log-empty { text-align: center; color: var(--dim); font-size: 13px; padding: 44px 20px; line-height: 1.9; }
+    .log-foot { padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border); }
+    #log-clear { width: 100%; padding: 11px; border-radius: 14px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surf2); color: var(--c-weak); font-weight: 700; }
+    #log-clear:active { transform: scale(.98); }
+
+    /* ── 「別の提案」ボタン ── */
+    #more-row { display: flex; justify-content: center; margin-top: 18px; }
+    #ver-row { text-align: center; font-size: 10.5px; color: var(--dim); opacity: .6;
+      margin-top: 10px; letter-spacing: .03em; }
+    #more-btn {
+      font-size: 14px; font-weight: 800; padding: 12px 26px; border-radius: 18px;
+      background: var(--surf); border: 1px dashed var(--acc); color: var(--acc);
+      cursor: pointer; box-shadow: var(--shadow); transition: transform .12s; }
+    #more-btn:active { transform: scale(.95); }
+
+    .empty { text-align: center; color: var(--dim); font-size: 13px; padding: 40px 20px; }
+
+    /* ── ローディング（スケルトン） ── */
+    .skel { background: var(--surf); border: 1px solid var(--border); border-radius: var(--rad);
+      height: 120px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .skel::after { content:""; position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(140,120,220,.10), transparent);
+      animation: sweep 1.2s infinite; }
+    @keyframes sweep { to { transform: translateX(100%); } }
+
+    /* ── 設定画面 ── */
+    #setup { flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; padding: 30px 26px; text-align: center; }
+    #setup .big { font-size: 50px; }
+    #setup h2 { font-size: 20px; font-weight: 800; }
+    #setup p { font-size: 13px; color: var(--dim); line-height: 1.8; }
+    #setup a { color: var(--acc); font-weight: 700; text-decoration: none; }
+    .api-in { width: 100%; max-width: 360px; background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 13px 16px; color: var(--text); font-size: 15px; outline: none;
+      box-shadow: var(--shadow); }
+    .api-in:focus { border-color: var(--acc); }
+    .big-btn { width: 100%; max-width: 360px; padding: 14px; border: none; border-radius: 18px;
+      background: linear-gradient(135deg, var(--acc), var(--acc2)); color: #fff;
+      font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: var(--shadow-lg); }
+    .big-btn:disabled { opacity: .5; }
+    .big-btn:active:not(:disabled) { transform: scale(.98); }
+
+    /* ── チャット ── */
+    #chat-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    #chat-top { display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+      flex-shrink: 0; }
+    #back-btn { background: var(--surf); border: 1px solid var(--border); border-radius: 13px;
+      padding: 8px 14px; font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer;
+      box-shadow: var(--shadow); -webkit-tap-highlight-color: transparent; }
+    #back-btn:active { transform: scale(.95); }
+    #chat-subj { font-size: 13px; font-weight: 800; padding: 6px 14px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--acc), var(--acc2)); color: #fff; }
+    #chat-area { flex: 1; overflow-y: auto; padding: 8px 16px 6px;
+      display: flex; flex-direction: column; gap: 11px; scroll-behavior: smooth; }
+    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 88%; }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.ai   { align-self: flex-start; align-items: flex-start; }
+    .bub { padding: 12px 15px; border-radius: 19px; font-size: 14.5px; line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word; box-shadow: var(--shadow); }
+    .msg.user .bub { background: linear-gradient(135deg, var(--acc), var(--acc2)); color: #fff;
+      border-bottom-right-radius: 6px; }
+    .msg.ai .bub { background: var(--surf); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+    .msg-time { font-size: 10px; color: var(--dim); padding: 0 6px; }
+    .typing { background: var(--surf); border: 1px solid var(--border); border-radius: 19px;
+      border-bottom-left-radius: 6px; padding: 14px 18px; display: inline-flex; gap: 5px;
+      box-shadow: var(--shadow); }
+    .dot { width: 7px; height: 7px; background: var(--dim); border-radius: 50%; animation: bop 1.2s infinite; }
+    .dot:nth-child(2){animation-delay:.2s} .dot:nth-child(3){animation-delay:.4s}
+    @keyframes bop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+    #quick { display: flex; gap: 7px; padding: 8px 16px 4px; overflow-x: auto;
+      flex-shrink: 0; scrollbar-width: none; }
+    #quick::-webkit-scrollbar { display: none; }
+    .qb { flex-shrink: 0; font-size: 12.5px; padding: 8px 15px; border-radius: 15px;
+      border: 1px solid var(--border); background: var(--surf); color: var(--text);
+      cursor: pointer; white-space: nowrap; font-weight: 600; box-shadow: var(--shadow);
+      -webkit-tap-highlight-color: transparent; }
+    .qb:active { transform: scale(.94); }
+    #input-row { display: flex; align-items: flex-end; gap: 9px; padding: 8px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+    #msg-in { flex: 1; background: var(--surf); border: 1px solid var(--border);
+      border-radius: 20px; padding: 11px 16px; color: var(--text); font-size: 15px;
+      outline: none; resize: none; min-height: 44px; max-height: 130px; line-height: 1.4;
+      box-shadow: var(--shadow); }
+    #msg-in:focus { border-color: var(--acc); }
+    #send { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; border: none; cursor: pointer;
+      background: linear-gradient(135deg, var(--acc), var(--acc2)); display: flex;
+      align-items: center; justify-content: center; box-shadow: var(--shadow); }
+    #send:disabled { opacity: .4; }
+    #send svg { width: 18px; height: 18px; fill: #fff; }
+
+    .hidden { display: none !important; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .card, .hero { animation: fadeUp .3s ease both; }
+
+    /* ── 右スワイプで完了して消す ── */
+    .card, .hero { touch-action: pan-y; }
+    .sw-wrap { position: relative; }
+    .sw-behind {
+      position: absolute; inset: 0; border-radius: var(--rad);
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+      display: flex; align-items: center; gap: 8px; padding-left: 22px;
+      color: #fff; font-weight: 800; font-size: 15px; opacity: 0; pointer-events: none;
+    }
+    .sw-wrap > .card, .sw-wrap > .hero { position: relative; z-index: 1; }
+    #undo-bar {
+      position: fixed; left: 50%; transform: translate(-50%, 160%);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+      width: min(440px, calc(100% - 32px)); z-index: 90;
+      background: #0f172a; color: #fff; border: 1px solid var(--border);
+      border-radius: 14px; padding: 13px 14px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.4); opacity: 0;
+      transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .3s;
+      font-size: 14px; font-weight: 700;
+    }
+    #undo-bar.show { transform: translate(-50%, 0); opacity: 1; }
+    #undo-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #undo-btn { background: transparent; border: none; color: #fbbf24; font-weight: 800;
+      font-size: 14px; cursor: pointer; flex: 0 0 auto; padding: 4px; }
+    .swipe-hint { font-size: 11.5px; color: var(--dim); font-weight: 600; margin: 2px 0 0; }
+
+    /* ════════ 🎙 自己説明 → 🤖 添削 → 🧠 今日覚える ════════ */
+    #speak-row { display:flex; gap:7px; padding:6px 16px 0; flex-shrink:0; }
+    .sp-btn { flex:1; font-size:13.5px; font-weight:800; padding:11px 10px; border-radius:15px;
+      border:none; color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent;
+      box-shadow:var(--shadow); }
+    .sp-btn:active { transform:scale(.96); }
+    .sp-mic  { background:linear-gradient(135deg,#ef4768,#f5901e); }
+    .sp-memo { background:linear-gradient(135deg,#18b389,#4f86ff); }
+
+    /* ボトムシート */
+    .sheet-ov { position:fixed; inset:0; z-index:120; display:flex;
+      align-items:flex-end; justify-content:center;
+      background:rgba(20,16,40,.5); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+    @media (min-width:600px){ .sheet-ov { align-items:center; } .sheet { border-radius:24px !important; } }
+    .sheet { width:100%; max-width:560px; max-height:92vh; overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      background:var(--surf); border-radius:24px 24px 0 0;
+      padding:16px 16px calc(18px + env(safe-area-inset-bottom));
+      box-shadow:var(--shadow-lg); animation:sheetUp .24s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes sheetUp { from{transform:translateY(26px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .sheet-head { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+    .sheet-head b { flex:1; font-size:16px; font-weight:800; }
+    .sheet-sub { font-size:12.5px; color:var(--dim); font-weight:600; line-height:1.7; margin-bottom:11px; }
+    .sheet-sub b { color:var(--text); }
+    .sp-ta { width:100%; background:var(--surf2); border:1px solid var(--border); border-radius:14px;
+      padding:12px 14px; color:var(--text); font-size:15.5px; line-height:1.65; outline:none;
+      resize:none; min-height:130px; font-family:inherit; box-sizing:border-box; }
+    .sp-ta:focus { border-color:var(--acc); }
+    .fld { margin-bottom:9px; }
+    .fld label { display:block; font-size:11.5px; font-weight:800; color:var(--dim); margin:0 0 4px 3px; }
+    .fld textarea { width:100%; background:var(--surf2); border:1px solid var(--border);
+      border-radius:12px; padding:9px 12px; color:var(--text); font-size:14px; line-height:1.6;
+      outline:none; resize:none; min-height:42px; font-family:inherit; box-sizing:border-box; }
+    .fld textarea:focus { border-color:var(--acc); }
+    .fld.gap textarea { border-left:4px solid var(--c-weak); }
+    .fld.rec textarea { border-left:4px solid var(--c-quiz); font-weight:700; }
+    .sheet-btns { display:flex; gap:8px; margin-top:8px; }
+    .sheet-btns button { flex:1; padding:13px 8px; border-radius:15px; border:none; font-size:14px;
+      font-weight:800; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .sheet-btns button:active { transform:scale(.97); }
+    .sb-main { background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#fff; }
+    .sb-main:disabled { opacity:.4; }
+    .sb-sub  { background:var(--surf2); border:1px solid var(--border); color:var(--text); }
+    .sb-sub.rec-on { background:var(--c-weak-bg); border-color:var(--c-weak); color:var(--c-weak);
+      animation:pulse 1.1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* 今日覚える デッキ */
+    .ov { position:fixed; inset:0; z-index:60; display:flex;
+      align-items:flex-end; justify-content:center;
+      background:rgba(20,16,40,.45); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+      animation:fadeUp .18s ease both; }
+    @media (min-width:600px) { .ov { align-items:center; } }
+    .memo-card { background:var(--surf2); border:1px solid var(--border);
+      border-left:4px solid var(--c-quiz); border-radius:14px; padding:12px 14px; margin:10px 0; }
+    .memo-card.hot { border-left-color:var(--c-weak); }
+    .mc-top { display:flex; align-items:center; gap:7px; margin-bottom:5px; flex-wrap:wrap; }
+    .mc-subj { font-size:10.5px; font-weight:800; color:var(--c-quiz);
+      background:var(--c-quiz-bg); padding:3px 8px; border-radius:8px; }
+    .memo-card.hot .mc-subj { color:var(--c-weak); background:var(--c-weak-bg); }
+    .mc-miss { font-size:10.5px; font-weight:800; color:var(--c-weak);
+      background:var(--c-weak-bg); padding:3px 8px; border-radius:8px; }
+    .mc-title { flex-basis:100%; font-size:14.5px; font-weight:800; line-height:1.5; }
+    .mc-body { font-size:13.5px; line-height:1.8; margin-top:7px; }
+    .mc-body .k { font-weight:800; color:var(--dim); font-size:11.5px; }
+    .mc-gap { color:var(--c-weak); }
+    .mc-recite { margin-top:8px; padding:10px 12px; border-radius:11px;
+      background:var(--c-quiz-bg); font-size:14.5px; font-weight:700; line-height:1.7; }
+    .mc-btns { display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+    .mc-btns button { font-size:12px; font-weight:700; padding:7px 12px; border-radius:11px;
+      border:1px solid var(--border); background:var(--surf); color:var(--text); cursor:pointer;
+      -webkit-tap-highlight-color:transparent; }
+    .mc-btns button:active { transform:scale(.94); }
+    .mc-btns .ok { border-color:var(--c-quiz); color:var(--c-quiz); font-weight:800; }
+    .mc-btns .ng { border-color:var(--c-weak); color:var(--c-weak); font-weight:800; }
+    .mc-btns .up { border-color:var(--c-task); color:var(--c-task); font-weight:800; }
+    #memo-list { flex:1; overflow-y:auto; padding:4px 14px 10px; -webkit-overflow-scrolling:touch; }
+    #memo-clear { width:100%; padding:11px; border-radius:14px; cursor:pointer;
+      border:1px solid var(--border); background:var(--surf2); color:var(--c-weak); font-weight:700; }
+    .memo-pill { position:relative; }
+    .memo-pill .badge { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px;
+      border-radius:8px; background:var(--c-weak); color:#fff; font-size:10px; font-weight:800;
+      display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ヘッダー -->
+  <header>
+    <span class="logo">📚</span>
+    <h1>復習フィード<small id="hd-date">--</small></h1>
+    <button class="icon-btn memo-pill" id="memo-btn" title="今日覚える">🧠<span class="badge hidden" id="memo-badge">0</span></button>
+    <button class="icon-btn" id="log-btn" title="復習ログ">📖</button>
+    <button class="icon-btn" id="theme-btn" title="テーマ">🌙</button>
+    <button class="icon-btn" id="font-btn" title="文字サイズ" style="font-weight:800">A</button>
+    <button class="icon-btn" id="reset-btn" title="リセット">↺</button>
+  </header>
+
+  <!-- 科目バー（フィード時のフィルタ／チャット時の科目切替） -->
+  <div id="subj-bar">
+    <button class="sbt feat on" data-s="">✨ おすすめ</button>
+    <button class="sbt" data-s="憲法">憲法</button>
+    <button class="sbt" data-s="民法">民法</button>
+    <button class="sbt" data-s="刑法">刑法</button>
+    <button class="sbt" data-s="行政法">行政法</button>
+    <button class="sbt" data-s="民訴法">民訴法</button>
+    <button class="sbt" data-s="刑訴法">刑訴法</button>
+    <button class="sbt" data-s="商法">商法</button>
+    <button class="sbt" data-s="実務基礎">実務基礎</button>
+  </div>
+
+  <!-- ① 設定 -->
+  <div id="setup" class="hidden">
+    <div class="big">🔑</div>
+    <h2>はじめの設定</h2>
+    <p>
+      Anthropic の APIキーを入力してください。<br>
+      精度重視で <b style="color:var(--text)">Claude Haiku</b> を使用（目安 月数十〜200円程度）。<br><br>
+      取得先 → <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>
+      <span style="font-size:11.5px">ログイン → 「Create Key」でコピー</span>
+    </p>
+    <input id="api-key-input" class="api-in" type="password" placeholder="sk-ant-..." autocomplete="off">
+    <button id="save-key-btn" class="big-btn" disabled>設定して始める</button>
+    <p style="font-size:11.5px">キーはこの端末のブラウザにだけ保存されます</p>
+  </div>
+
+  <!-- ② フィード -->
+  <div id="scroll" class="hidden">
+    <div class="greet">
+      <div class="hi" id="greet-hi">おかえりなさい</div>
+      <div class="sub" id="greet-sub">今日の復習、ここから一歩だけ。</div>
+      <div class="stats" id="greet-stats"></div>
+    </div>
+    <div id="cat-bar"></div>
+    <div id="hero-slot"></div>
+    <div class="sec-h" id="cards-head">✨ あなたへの提案</div>
+    <div id="cards"></div>
+    <div id="more-row" class="hidden">
+      <button id="more-btn">🎲 別の提案を見る</button>
+    </div>
+    <div id="ver-row">v<span id="app-ver"></span></div>
+  </div>
+
+  <!-- ③ チャット -->
+  <div id="chat-wrap" class="hidden">
+    <div id="chat-top">
+      <button id="back-btn">← フィード</button>
+      <span id="chat-subj">--</span>
+    </div>
+    <div id="chat-area"></div>
+    <div id="speak-row">
+      <button class="sp-btn sp-mic"  id="speak-btn">🎙 自分で説明する</button>
+      <button class="sp-btn sp-memo" id="chat-memo-btn">🧠 今日覚える</button>
+    </div>
+    <div id="quick">
+      <button class="qb" data-m="いちばん重要な要点を、もう少し詳しく教えてください">🔎 もっと詳しく</button>
+      <button class="qb" data-m="重複しない別の論点キーワードを5〜7個挙げてください">🔄 別の5つ</button>
+      <button class="qb" data-m="もう少しやさしく説明してください">🟢 やさしく</button>
+      <button class="qb" data-m="関連する論点も教えてください">🔗 関連論点</button>
+      <button class="qb" data-m="確認のため、基本問題を1問だけ出してください">🧠 1問出す</button>
+      <button class="qb" data-m="今日はここまでにします。要点を3つにまとめてください">🏁 まとめ</button>
+    </div>
+    <div id="input-row">
+      <textarea id="msg-in" placeholder="答えや質問を入力..." rows="1"></textarea>
+      <button id="send" disabled><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ④ 復習ログ -->
+  <div id="log-ov" class="hidden">
+    <div class="log-panel">
+      <div class="log-head">
+        <span>📖 復習ログ</span>
+        <button class="icon-btn" id="log-close" title="閉じる">✕</button>
+      </div>
+      <div id="log-list"></div>
+      <div class="log-foot"><button id="log-clear">🗑 ログを消去</button></div>
+    </div>
+  </div>
+
+  <!-- ⑤ 今日覚える デッキ -->
+  <div id="memo-ov" class="ov hidden">
+    <div class="log-panel">
+      <div class="log-head">
+        <span>🧠 今日覚える</span>
+        <button class="icon-btn" id="memo-close" title="閉じる">✕</button>
+      </div>
+      <div id="memo-list"></div>
+      <div class="log-foot"><button id="memo-clear">🗑 言えたものを片づける（〇が2回以上）</button></div>
+    </div>
+  </div>
+
+  <!-- 完了取り消しバー -->
+  <div id="undo-bar">
+    <span id="undo-text"></span>
+    <button id="undo-btn">取り消す</button>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  定数
+// ════════════════════════════════════════════
+const WEEKLY = {0:"商法",1:"憲法",2:"民法",3:"刑法",4:"行政法",5:"民訴法",6:"刑訴法"};
+const APP_VER = "20260913-3";   // ← 更新するたびに version.json と合わせて上げる
+const API_URL = "https://api.anthropic.com/v1/messages";
+const API_MODEL = "claude-haiku-4-5-20251001";
+const CTX_URL = () => `https://raw.githubusercontent.com/osamuina8008/business-tools/main/study/context.json?t=${Date.now()}`;
+
+// カテゴリ定義
+const CAT = {
+  review: { label:"復習どき", icon:"🔄", color:"var(--c-review)", bg:"var(--c-review-bg)" },
+  weak:   { label:"苦手",     icon:"🔴", color:"var(--c-weak)",   bg:"var(--c-weak-bg)" },
+  task:   { label:"今日やる", icon:"🏁", color:"var(--c-task)",   bg:"var(--c-task-bg)" },
+  quiz:   { label:"今日の1問",icon:"🧠", color:"var(--c-quiz)",   bg:"var(--c-quiz-bg)" },
+  tip:    { label:"コツ",     icon:"💡", color:"var(--c-tip)",    bg:"var(--c-tip-bg)" },
+  read:   { label:"読みもの", icon:"📰", color:"var(--c-read)",   bg:"var(--c-read-bg)" },
+  ai:     { label:"AI横断",   icon:"⤴",  color:"var(--c-weak)",   bg:"var(--c-weak-bg)" },
+};
+
+// ════════════════════════════════════════════
+//  状態
+// ════════════════════════════════════════════
+let apiKey  = localStorage.getItem("anthropic_api_key") || "";
+let ctx     = null;
+let ALL_CARDS = [];
+let subjFilter = "";       // "" = 全科目
+let catFilter  = "all";
+let reshuffle  = 0;
+let history    = [];
+let busy       = false;
+let chatSubject = WEEKLY[new Date().getDay()];
+
+// 右スワイプで完了 → その日フィードから消す（id→完了した日付。端末に保存）
+// ※日付ごとなので、翌日以降に同じ提案が出れば復習のために再表示される
+let DISMISSED = (()=>{ try{ const v=JSON.parse(localStorage.getItem("rf_dismissed")||"{}");
+    return (v && typeof v==="object" && !Array.isArray(v)) ? v : {}; }
+  catch(e){ return {}; } })();
+function saveDismissed(){ localStorage.setItem("rf_dismissed", JSON.stringify(DISMISSED)); }
+function isDismissedToday(id){ return DISMISSED[id] === dayKey(Date.now()); }
+let lastDismissed = null, undoTimer = null;
+
+const $ = id => document.getElementById(id);
+// 文字列以外（オブジェクト等）や Obsidian ウィキリンクの残骸・角括弧を除去する共通サニタイザ
+const clean = v => {
+  if(v == null) return "";
+  let s = (typeof v === "object")
+    ? (v.article || v.name || v.title || v.text || v.label || v.keyword || "")
+    : String(v);
+  return s
+    .replace(/\[object Object\]/gi, "")   // オブジェクト誤変換の残骸
+    .replace(/\[\[|\]\]/g, "")             // Obsidianウィキリンク [[ ]]
+    .replace(/[\[\]]/g, "")                // 余った角括弧
+    .replace(/\*\*/g, "")                  // Markdown強調
+    .trim();
+};
+const esc = s => clean(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// ── メモ・検索の飛び先（Obsidian）──
+// Vault名を変えたい場合はブラウザの localStorage の rf_obs_vault を書き換える
+const OBS_VAULT = localStorage.getItem("rf_obs_vault") || "Time based-司法試験予備試験";
+const OBS_STUDY_DIR = "TimeBase/20_Study";
+// 科目名 → 20_Study 配下のフォルダ名（表記ゆれも拾う）
+const SUBJ_DIR = {
+  "刑事訴訟法":"1.刑訴法", "民事訴訟法":"2.民訴法",
+  "刑訴法":"1.刑訴法", "民訴法":"2.民訴法",
+  "刑訴":"1.刑訴法",   "民訴":"2.民訴法",
+  "会社法":"3.商法",   "商法":"3.商法",
+  "行政法":"6.行政法", "憲法":"7.憲法",
+  "民法":"4.民法",     "刑法":"5.刑法"
+};
+const SUBJ_KEYS = Object.keys(SUBJ_DIR).sort((a,b)=>b.length-a.length);
+// メモの保存先フォルダ。科目が判らないときだけ 20_Study 直下に置く
+function obsMemoDir(subject){
+  const k = clean(subject);
+  if(SUBJ_DIR[k]) return `${OBS_STUDY_DIR}/${SUBJ_DIR[k]}`;
+  const hit = SUBJ_KEYS.find(x => k.includes(x));
+  return hit ? `${OBS_STUDY_DIR}/${SUBJ_DIR[hit]}` : OBS_STUDY_DIR;
+}
+const obsSearch = q => `obsidian://search?vault=${encodeURIComponent(OBS_VAULT)}&query=${encodeURIComponent(clean(q))}`;
+function obsMemo(c){
+  const file = `${obsMemoDir(c.subject)}/復習メモ_${dayKey(Date.now())}`;
+  const kw = (c.kws||[]).filter(Boolean).map(clean).join("・");
+  const body = [
+    `## ${clean(c.title)}`,
+    c.subject ? `- 科目：${clean(c.subject)}` : "",
+    c.topic   ? `- 論点：${clean(c.topic)}` : "",
+    (kw && kw !== clean(c.topic)) ? `- キーワード：${kw}` : "",
+    c.aim     ? `- ねらい：${clean(c.aim)}` : "",
+    c.why     ? `- ${clean(c.why)}` : "",
+    `- 自分の言葉で言うと：`
+  ].filter(Boolean).join("\n");
+  return `obsidian://new?vault=${encodeURIComponent(OBS_VAULT)}&file=${encodeURIComponent(file)}&append=true&content=${encodeURIComponent(body+"\n")}`;
+}
+
+// ════════════════════════════════════════════
+//  復習ログ（復習した記録＝マーク＋履歴）
+// ════════════════════════════════════════════
+let reviewLog = (()=>{ try{ return JSON.parse(localStorage.getItem("rf_review_log")||"[]"); }
+  catch(e){ return []; } })();
+// id → 最終復習timestamp（マーク表示用）
+let REVIEWED = {};
+function rebuildReviewed(){ REVIEWED={}; reviewLog.forEach(e=>{
+  if(!REVIEWED[e.id] || e.ts>REVIEWED[e.id]) REVIEWED[e.id]=e.ts; }); }
+rebuildReviewed();
+
+// カードの安定ID（同じ提案は同じID）
+const cardId = c => `${c.cat}::${c.subject||""}::${c.title}`;
+const dayKey = ts => new Date(ts - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+
+function recordReview(c){
+  const id = cardId(c);
+  reviewLog.push({ id, title:c.title, subject:c.subject||"", cat:c.cat, ts:Date.now() });
+  if(reviewLog.length>500) reviewLog = reviewLog.slice(-500);
+  localStorage.setItem("rf_review_log", JSON.stringify(reviewLog));
+  REVIEWED[id] = Date.now();
+}
+function todayReviewCount(){
+  const t = dayKey(Date.now());
+  return reviewLog.filter(e=> dayKey(e.ts)===t).length;
+}
+
+// ════════════════════════════════════════════
+//  論点ライブラリ（キーワード＋具体イメージ＋ねらい）
+//  hook … カードの見出し。「どんな場面の話か」が一読で浮かぶ一文
+//  aim  … これができるようになると何が取れるか（学習の目的）
+//  b    … 答案で書く骨。kw … Obsidian検索キーワード
+// ════════════════════════════════════════════
+const TOPICS = {
+  "憲法": [
+    {t:"二重の基準", kw:"二重の基準",
+     hook:"デモは厳しく守られ、営業規制はあっさり合憲。裁判所はなぜ態度を変えるのか",
+     aim:"人権問題で「どの審査基準を使うか」を最初の3行で決められる",
+     b:"精神的自由は民主過程で回復できない→違憲性を厳しく審査。経済的自由は立法による事後修正が可能→緩やかに審査。まず権利の性質を特定するのが出発点。"},
+    {t:"違憲審査基準の選択", kw:"違憲審査基準", syn:["LRA","比較衡量","厳格審査"],
+     hook:"「目的は正当、手段は相当」——この一文をどこまで書き分けられるか",
+     aim:"基準設定と当てはめで、人権パートの点の大半を取りにいく",
+     b:"厳格＝やむにやまれぬ目的＋必要最小限（LRAの有無）／中間＝重要な目的＋実質的関連性／合理性＝正当な目的＋合理的関連性。規制態様（内容規制か内容中立か）も基準を動かす。"},
+    {t:"事前抑制と検閲", kw:"事前抑制",
+     hook:"出版前の雑誌に差止めを求められた裁判官。原則ダメと言うのはなぜか",
+     aim:"表現の自由の頻出形（北方ジャーナル型）を型どおり処理できる",
+     b:"検閲（21条2項）は絶対禁止。裁判所の事前差止めは例外的に、①公務員・公職候補者への評価②表現内容が真実でなく専ら公益目的でない③被害が重大で回復困難、を満たす場合のみ許容。"},
+    {t:"私人間効力", kw:"私人間効力",
+     hook:"会社が思想を理由に採用を拒んだ。憲法は会社に向けて使えるのか",
+     aim:"人権パートの書き出しで詰まらない（三菱樹脂型）",
+     b:"憲法は対国家が原則。私人間は民法90条・709条という一般条項の解釈に憲法の趣旨を読み込む間接適用（判例）。直接適用説・無適用説との対比を一言添える。"},
+    {t:"法の下の平等", kw:"法の下の平等",
+     hook:"扱いを分けること自体は普通にある。それがいつ「差別」に変わるのか",
+     aim:"国籍法・非嫡出子型の平等問題を、立法事実の変化まで含めて論じられる",
+     b:"①区別の存在を特定②区別事由（14条1項後段の列挙事由なら審査を厳格化）③目的の重要性と手段の関連性。制定時は合理的でも社会の変化で不合理化する、という時の視点が決め手。"},
+    {t:"規制目的二分論", kw:"規制目的二分論",
+     hook:"薬局の距離制限は違憲、小売市場の距離制限は合憲。この差はどこから出たのか",
+     aim:"経済的自由の定番問題で、二分論を使いつつ限界も示せる",
+     b:"消極目的（生命健康への危険防止）＝厳格な合理性・立法事実の審査（薬事法）／積極目的（社会経済政策）＝明白の原則（小売市場）。機械的な二分は避け、規制態様も併せて評価する。"},
+    {t:"政教分離", kw:"政教分離",
+     hook:"市が神社の土地をタダで貸していた。これは宗教への「援助」なのか",
+     aim:"目的効果基準と総合考慮のどちらで書くかを、事案から選べる",
+     b:"目的効果基準（津地鎮祭）＝行為の目的が宗教的意義を持ち、効果が特定宗教への援助・助長・圧迫となるか。空知太は諸般の事情の社会通念による総合判断。事案の性質で使い分ける。"},
+    {t:"司法権の限界・統治行為", kw:"統治行為",
+     hook:"衆議院の解散は違憲か。裁判所は「それには答えない」と言う",
+     aim:"訴訟要件段階で切られる論点を、入口でつぶせる",
+     b:"法律上の争訟（裁判所法3条）＝当事者間の具体的権利義務の紛争＋法適用で終局的解決可能。高度に政治性のある国家行為は司法審査の外（苫米地）。部分社会の法理も同じ引き出し。"},
+    {t:"適正手続（31条）", kw:"適正手続",
+     hook:"行政が建物の使用を止める。刑事じゃないから告知も聴聞も要らない——本当か",
+     aim:"31条を行政手続へ及ぼす筋道（成田新法）を条文から書ける",
+     b:"31条は刑事手続の規定だが、行政手続にも及びうる。ただし常に必要ではなく、制限される利益の内容・程度、目的、緊急性等の比較衡量で決まる。"},
+    {t:"衆議院の解散", kw:"衆議院の解散",
+     hook:"「解散するぞ」と内閣が言える根拠は、憲法のどこに書いてあるのか",
+     aim:"統治分野で条文操作の正確さを見せる",
+     b:"7条3号説（実務）と69条限定説の対立。65条の行政権概念、66条3項の連帯責任、内閣不信任決議との関係を条文でつなぐ。"},
+  ],
+  "民法": [
+    {t:"対抗要件（177条）", kw:"対抗要件",
+     hook:"同じ土地が二人に売られた。先に登記した方が勝つ——では事情を知っていた買主は",
+     aim:"物権変動の典型を、背信的悪意者の限界まで書ける",
+     b:"不動産物権変動は登記なくして第三者に対抗できない。「第三者」＝登記の欠缺を主張する正当な利益を有する者。背信的悪意者は除外、単純悪意者は含む点が分水嶺。"},
+    {t:"意思表示の瑕疵", kw:"意思表示",
+     hook:"だまされて売った土地が、もう別の人の手に渡っている。取り消せるのか",
+     aim:"93〜96条を第三者保護まで一気に処理できる",
+     b:"心裡留保・虚偽表示＝善意（虚偽表示は善意）の第三者に対抗不可。錯誤＝重要な錯誤で取消可、善意無過失の第三者に対抗不可。詐欺＝取消可、善意無過失の第三者に対抗不可。強迫＝第三者にも対抗可。"},
+    {t:"表見代理", kw:"表見代理",
+     hook:"元社員が古い名刺と印鑑で契約してきた。会社は責任を負うのか",
+     aim:"109・110・112条の振り分けと重畳適用を迷わず選べる",
+     b:"109条＝代理権授与表示、110条＝権限外の行為＋正当理由、112条＝代理権消滅後。まず無権代理を確定し、次に相手方の正当理由（善意無過失）を事実で基礎づける。"},
+    {t:"詐害行為取消権", kw:"詐害行為取消権",
+     hook:"借金を抱えた債務者が、唯一の不動産を親族に安く売った。取り戻せるか",
+     aim:"責任財産保全の2つの武器（代位・取消）を使い分けられる",
+     b:"被保全債権の発生時期、無資力、詐害性（行為の類型ごとに424条の2〜4）、受益者の悪意。訴えによる行使、効果は債権者への直接支払まで。"},
+    {t:"危険負担・履行不能", kw:"危険負担",
+     hook:"引渡し前に建物が焼けた。代金は払わなければならないのか",
+     aim:"2020年改正後の処理（拒絶権構成）を正確に書ける",
+     b:"債務者の帰責事由なく履行不能→債権者は反対給付の履行を拒める（536条1項）。債権者に帰責事由があれば拒めない（同2項）。解除は帰責事由不要（541・542条）に変わった点が要。"},
+    {t:"契約不適合責任", kw:"契約不適合",
+     hook:"買った中古住宅に雨漏り。直させるのか、値引きか、解除か",
+     aim:"買主の4つの手札を、期間制限まで含めて整理できる",
+     b:"追完請求（562）・代金減額（563）・損害賠償（564→415）・解除（564→541,542）。種類品質の不適合は知った時から1年の通知（566）。債務不履行の一般則に統合された構造を意識する。"},
+    {t:"消滅時効と信義則", kw:"消滅時効",
+     hook:"「必ず払う」と言っておいて、後から時効だと言い出す債務者",
+     aim:"時効の援用を封じる筋（信義則・承認）を条文＋判例で書ける",
+     b:"主観5年・客観10年（166条）。完成猶予と更新（147条以下）を条文で。時効完成後に債務承認すれば以後の援用は信義則上許されない（最大判昭41.4.20）。"},
+    {t:"抵当権の効力範囲・物上代位", kw:"物上代位",
+     hook:"抵当に入れた建物が焼け、保険金が出た。銀行はその金を押さえられるか",
+     aim:"担保物権の頻出形を、差押えの要否まで詰められる",
+     b:"抵当権は付加一体物に及ぶ（370）。物上代位（372→304）は払渡し前の差押えが必要。賃料への物上代位、抵当権侵害への妨害排除も同じ引き出しに入れる。"},
+    {t:"不法行為の過失", kw:"過失",
+     hook:"予見できなかったのか、予見はできたが避けられなかったのか",
+     aim:"709条の当てはめを、抽象論でなく事実で書ける",
+     b:"過失＝結果の予見可能性を前提とした結果回避義務違反。医療・交通・製造物など類型ごとに要求される注意義務の水準が異なる。因果関係は相当因果関係＋416条類推で範囲を画す。"},
+    {t:"同時履行の抗弁", kw:"同時履行の抗弁", syn:["533条","留置権","引換給付"],
+     hook:"「先に品物を出せ」「いや先に金を払え」——この睨み合いを法はどう解くか",
+     aim:"抗弁の性質（存在効果）と引換給付判決までつなげられる",
+     b:"双務契約で相手方が履行の提供をするまで自己の履行を拒める（533条）。援用しなくても存在するだけで履行遅滞にならない（存在効果説）。主張されれば引換給付判決。留置権との違いは対人的か対世的か。"},
+    {t:"遺留分侵害額請求", kw:"遺留分",
+     hook:"「全財産を長男へ」という遺言。他の子は何も取れないのか",
+     aim:"相続分野の改正点（金銭債権化）を落とさず処理できる",
+     b:"2019年改正で物権的効力から金銭債権へ。遺留分＝総体的遺留分（1042）×法定相続分。基礎財産に算入する贈与の範囲（相続人は10年、第三者は1年）を条文で確認する。"},
+  ],
+  "刑法": [
+    {t:"正当防衛", kw:"正当防衛", syn:["違法性阻却","過剰防衛","急迫不正の侵害"],
+     hook:"殴られる寸前に殴り返した。どこまでが防衛で、どこからが喧嘩か",
+     aim:"36条の4要件を、自招侵害・過剰防衛まで一続きで書ける",
+     b:"①急迫性②不正の侵害③防衛の意思④やむを得ずした行為（必要性・相当性）。積極的加害意思があれば急迫性を否定（最決昭52）。自招侵害は正当防衛状況を認めない方向で処理。"},
+    {t:"因果関係（危険の現実化）", kw:"因果関係",
+     hook:"暴行後に被害者が逃げて事故死。その死は行為者のせいか",
+     aim:"結果の帰属を、条件関係だけで済ませずに書ける",
+     b:"条件関係を前提に、行為の危険性が結果へ現実化したかを判断（危険の現実化説）。介在事情の異常性と結果への寄与度で判断。大阪南港事件・高速道路進入事件を素材に。"},
+    {t:"不作為犯", kw:"不作為犯",
+     hook:"目の前で溺れる子。助けなかったことが「殺した」になるのはどんな時か",
+     aim:"作為義務の根拠づけを、事実から丁寧に組み立てられる",
+     b:"①法令②契約・事務管理③先行行為④排他的支配。作為義務＋作為の可能性容易性＋作為との構成要件的同価値性。保護責任者遺棄との区別は殺意と支配の程度。"},
+    {t:"事実の錯誤", kw:"事実の錯誤",
+     hook:"Aを狙って撃った弾がBに当たった。Bへの故意はあるのか",
+     aim:"具体的符合説と法定的符合説で結論が変わる場面を示せる",
+     b:"客体の錯誤／方法（打撃）の錯誤／因果関係の錯誤。法定的符合説なら同一構成要件内で故意を阻却せず、数故意犯説と一故意犯説が分かれる。抽象的事実の錯誤は38条2項＋構成要件の重なり合い。"},
+    {t:"共同正犯と幇助の区別", kw:"共同正犯",
+     hook:"見張りをしただけの者は、正犯か、手助けか",
+     aim:"共犯パートの入口を、事実の評価で決められる",
+     b:"共謀＋一部実行全部責任（60条）。正犯性は、自己の犯罪として関与したか（動機・利益の帰属・関与の重要性・主導性）で判断。共謀共同正犯は謀議への主体的関与を事実で示す。"},
+    {t:"共犯からの離脱", kw:"共犯からの離脱",
+     hook:"「俺は抜ける」と言って帰った。その後の強盗の責任も負うのか",
+     aim:"着手前後で処理が変わることを条文と因果性から書ける",
+     b:"因果性の遮断が基準。着手前は離脱の意思表示＋他の共犯者の了承で足りることが多いが、着手後は結果防止の積極的措置が必要。首謀者はより強い遮断措置を要する。"},
+    {t:"中止犯", kw:"中止犯",
+     hook:"火をつけた直後に怖くなって自分で消した。刑は必ず減るのか",
+     aim:"43条但書の「自己の意思により」を任意性の議論として書ける",
+     b:"実行の着手（未遂の成立）→中止行為（着手中止か実行中止か）→任意性。任意性は主観説・限定主観説・客観説の対立。真摯な努力と結果不発生の因果性も要る。"},
+    {t:"窃盗と横領の区別", kw:"窃盗横領",
+     hook:"預かっていた物を売り払った。盗んだのか、着服したのか",
+     aim:"占有の帰属という一点で財産犯を振り分けられる",
+     b:"窃盗＝他人の占有を侵害して奪取。横領＝自己の占有する他人の物を領得。占有は事実的支配＋支配意思。封緘物・上下主従関係・預金の占有が典型の争点。"},
+    {t:"詐欺罪の欺罔行為", kw:"詐欺罪",
+     hook:"身分を偽って口座を作った。誰の、どんな損はあったのか",
+     aim:"交付の判断の基礎となる重要事項という現在の判例枠組みで書ける",
+     b:"欺罔行為＝交付の判断の基礎となる重要な事項を偽ること（最決平26）。錯誤→交付行為→占有移転→財産上の損害。挙動による欺罔、不作為による欺罔も同じ枠で。"},
+    {t:"文書偽造", kw:"文書偽造",
+     hook:"他人の名前でサインした書類。中身が本当でも罪になるのか",
+     aim:"有形偽造／無形偽造の区別を名義人と作成者で処理できる",
+     b:"偽造＝名義人と作成者の人格の同一性を偽ること（有形偽造）。虚偽記載は無形偽造で私文書は原則不可罰（160条の例外）。行使の目的、公文書か私文書かで条文が変わる。"},
+  ],
+  "行政法": [
+    {t:"処分性", kw:"処分性", syn:["抗告訴訟","行政処分"],
+     hook:"通知が1通届いただけ。これを裁判で争えるのか、争えないのか",
+     aim:"抗告訴訟の入口を、根拠法令の仕組みから論証できる",
+     b:"公権力の主体たる国等の行為で、直接国民の権利義務を形成しまたはその範囲を確定するもの。近時は仕組み解釈（実効的権利救済の必要性）で拡張。病院開設中止勧告・登録免許税還付拒否など。"},
+    {t:"原告適格", kw:"原告適格",
+     hook:"隣に産廃処分場ができる。近所に住んでいるだけで訴えられるのか",
+     aim:"9条2項の考慮要素を条文の順序どおり当てはめられる",
+     b:"法律上の利益＝処分の根拠法令が個々人の個別的利益としても保護する趣旨か。9条2項＝根拠法令の趣旨目的、関係法令、害される利益の内容性質および害され方の程度。小田急・もんじゅ。"},
+    {t:"狭義の訴えの利益", kw:"訴えの利益",
+     hook:"建物はもう完成した。それでも建築確認の取消しを求める意味はあるか",
+     aim:"時の経過で訴訟がどう終わるかを予測して書ける",
+     b:"処分が効力を失っても、なお回復すべき法律上の利益があるか（9条括弧書）。工事完了・営業期間経過・除却済みなどの事案類型で判例の結論を押さえる。"},
+    {t:"裁量権の逸脱・濫用", kw:"裁量権", syn:["判断過程","判断過程審査","比例原則","他事考慮"],
+     hook:"どちらの判断もありえた場面で、裁判所はどこまで踏み込むのか",
+     aim:"30条の当てはめを、4類型と判断過程審査で厚く書ける",
+     b:"①事実誤認②目的違反・他事考慮③平等原則違反④比例原則違反。近時は判断過程の合理性審査（日光太郎杉・小田急）。社会観念上著しく妥当を欠くかが基本の物差し。"},
+    {t:"理由の提示", kw:"理由の提示",
+     hook:"「不許可とする」の一言だけの通知書。それだけで取消事由になるか",
+     aim:"手続の瑕疵だけで勝てる筋を落とさない",
+     b:"行手法14条。処分の名宛人が理由を了知でき、恣意を抑制し不服申立ての便宜になる程度の記載が必要。処分基準の適用関係まで示すべき場合がある（最判平23・一級建築士）。"},
+    {t:"国家賠償1条", kw:"国家賠償",
+     hook:"公務員のミスで損をした。誰に、何を根拠に請求するのか",
+     aim:"1条と2条の振り分けを事案の性質で即断できる",
+     b:"公権力の行使にあたる公務員の職務行為＋故意過失＋違法＋損害。違法性は職務上通常尽くすべき注意義務違反（職務行為基準説）。規制権限不行使は裁量権消極的濫用論。"},
+    {t:"営造物責任（国賠2条）", kw:"営造物責任",
+     hook:"道路の穴で転倒した。管理者に過失がなくても責任は生じるか",
+     aim:"無過失責任という性質と、供用関連瑕疵まで書ける",
+     b:"公の営造物の設置管理の瑕疵＝通常有すべき安全性を欠くこと。無過失責任。予算不足は原則抗弁にならない。道路と河川で要求水準が異なる（大東水害・多摩川水害）。"},
+    {t:"取消しと撤回", kw:"職権取消し",
+     hook:"一度出した許可を、後から役所が引っ込める。できる場合とできない場合",
+     aim:"法律の留保と信頼保護をセットで論じられる",
+     b:"職権取消し＝原始的瑕疵、遡及効。撤回＝後発事情、将来効。授益的処分の取消撤回は相手方の信頼・既得権と公益を比較衡量。撤回に明文の根拠は原則不要（最判昭63）。"},
+    {t:"行政指導", kw:"行政指導",
+     hook:"「お願いベース」のはずの指導が、事実上の強制になっていないか",
+     aim:"行手法32〜36条の条文を武器として使える",
+     b:"任意の協力によるもので、不利益取扱いの示唆は禁止（32条2項）。申請に関連する指導は申請者が拒否の意思を明確にすれば継続不可（33条）。品川マンション・武蔵野マンション。"},
+    {t:"執行停止と仮の救済", kw:"執行停止",
+     hook:"取消訴訟を起こしても、処分の効力は止まらない。では今日どうするか",
+     aim:"本案の前に必要な手当てを条文で示せる",
+     b:"執行不停止原則（25条1項）→重大な損害を避けるため緊急の必要（同2項）、公共の福祉への重大な影響なし・本案に理由がないとみえないこと。義務付けは仮の義務付け（37条の5）。"},
+  ],
+  "民訴法": [
+    {t:"訴訟物の特定", kw:"訴訟物",
+     hook:"「金を返せ」と書いただけの訴状。裁判所は何について判断するのか",
+     aim:"審判の対象を決め、既判力の範囲まで一本の線でつなげる",
+     b:"請求の趣旨＋請求原因で特定。旧訴訟物理論では実体法上の権利ごとに別個。給付・確認・形成で構造が違う。二重起訴（142条）・既判力の範囲もここから決まる。"},
+    {t:"処分権主義", kw:"処分権主義",
+     hook:"原告が100万円と言っているのに、裁判所が120万円を認めたら何がまずいのか",
+     aim:"246条違反という一行の指摘を、制度趣旨から説明できる",
+     b:"訴訟の開始・審判対象の特定・終了を当事者の意思に委ねる建前。申立事項と判決事項の一致（246条）。一部請求、引換給付判決、和解・請求の放棄認諾も同じ引き出し。"},
+    {t:"弁論主義", kw:"弁論主義",
+     hook:"裁判官が記録から見つけた事実。当事者が言っていなければ使えるのか",
+     aim:"3つのテーゼを、主要事実か否かの切り分けとセットで書ける",
+     b:"①主要事実は当事者の主張がなければ判決の基礎にできない②自白された主要事実は裁判所を拘束③証拠は当事者の申出によるもののみ。間接事実・補助事実には及ばない。"},
+    {t:"既判力の客観的範囲", kw:"既判力の範囲", syn:["争点効","理由中の判断"],
+     hook:"判決理由の中で「その契約は無効」と書かれた。次の訴訟でも通用するのか",
+     aim:"114条を条文どおりに使い、相殺の例外を落とさない",
+     b:"主文に包含するものに限る（114条1項）。理由中の判断には原則及ばない。相殺の抗弁で判断された反対債権の不存在は例外的に既判力（同2項）。争点効の議論も一言。"},
+    {t:"既判力の時的限界", kw:"既判力",
+     hook:"負けた後で「実は相殺できた」と言い出す被告。もう遅いのか",
+     aim:"標準時と遮断効を、例外（形成権）まで含めて処理できる",
+     b:"標準時＝事実審口頭弁論終結時。それ以前に存在した事由は主張できたのにしなかった以上遮断。取消権・解除権は遮断、相殺権は遮断しないのが通説。"},
+    {t:"二重起訴の禁止", kw:"二重起訴",
+     hook:"同じ争いを別の裁判所にも持ち込んだ。後の訴えはどうなるか",
+     aim:"142条の当事者・事件の同一性を訴訟物論とつなげられる",
+     b:"当事者の同一＋審判対象の同一。相殺の抗弁と別訴の関係、一部請求後の残部請求が典型の争点。趣旨は判決矛盾の回避・被告の応訴の煩・訴訟経済。"},
+    {t:"証明責任", kw:"証明責任",
+     hook:"どちらとも言えない、で終わった事実。負けるのはどちらか",
+     aim:"真偽不明の処理を、規範説の配分から説明できる",
+     b:"真偽不明のとき不利益を受ける当事者の地位。法律要件分類説で権利根拠・障害・消滅・阻止の各規定に振り分ける。自由心証主義（247条）、証明度、事実上の推定と区別する。"},
+    {t:"訴えの利益・当事者適格", kw:"訴えの利益",
+     hook:"勝っても何も変わらない訴え。裁判所は中身を見てくれるのか",
+     aim:"本案前で切られる筋を、訴え類型ごとに押さえる",
+     b:"給付の訴えは原則あり（将来給付は135条）。確認の訴えは方法選択の適否・対象選択の適否・即時確定の利益。当事者適格は訴訟物についての管理処分権、第三者の訴訟担当。"},
+    {t:"既判力の主観的範囲", kw:"既判力の主観的範囲",
+     hook:"判決の後に物を買った人は、その判決に縛られるのか",
+     aim:"115条の4類型を事案から選び取れる",
+     b:"当事者、訴訟担当の被担当者、口頭弁論終結後の承継人、目的物の所持者（115条）。既判力の相対効が原則で、反射効の議論はその補正として位置づける。"},
+    {t:"補助参加と独立当事者参加", kw:"補助参加",
+     hook:"自分の裁判ではないが、負けられたら困る。どう入っていくか",
+     aim:"多数当事者訴訟の入口を、利益の性質で選べる",
+     b:"補助参加＝訴訟の結果に法律上の利害関係（42条）、参加的効力（46条）。独立当事者参加は詐害防止参加・権利主張参加（47条）で三面訴訟に。共同訴訟の合一確定（40条）も併せて。"},
+  ],
+  "刑訴法": [
+    {t:"職務質問と所持品検査", kw:"職務質問",
+     hook:"バッグの中を見せてくれと言われ、黙っていたら開けられた",
+     aim:"任意捜査の限界を、必要性・緊急性・相当性で当てはめられる",
+     b:"警職法2条1項。所持品検査は承諾が原則。承諾なき検査も、捜索に至らない程度で、必要性・緊急性、法益侵害の程度と害される個人の利益の権衡で許容（最判昭53・米子銀行）。"},
+    {t:"逮捕に伴う捜索・差押え", kw:"令状主義",
+     hook:"逮捕したその場で部屋を捜索した。令状はいらないのか",
+     aim:"220条の範囲（場所的・時間的）を条文と趣旨から画せる",
+     b:"令状主義（憲法35条・刑訴法218条）の例外。趣旨は証拠破壊の防止と逮捕者の安全（相当説／緊急処分説）。逮捕の現場の意義、逮捕との時間的接着、対象物の範囲が争点。"},
+    {t:"違法収集証拠排除法則", kw:"違法収集証拠", syn:["毒樹の果実","排除法則"],
+     hook:"違法に集めた証拠でも、真実なら使ってよいのか",
+     aim:"排除の枠組みと毒樹の果実を段階的に書ける",
+     b:"令状主義の精神を没却する重大な違法＋これを証拠とすることが将来の違法捜査抑制の見地から相当でない（最判昭53）。派生証拠は違法性の承継・希釈・独立入手源で処理。"},
+    {t:"自白法則と補強法則", kw:"自白法則", syn:["補強法則","補強証拠","罪体"],
+     hook:"「認めれば帰してやる」と言われて出した自白",
+     aim:"任意性・違法排除・補強を一つの流れで処理できる",
+     b:"不任意自白は証拠能力なし（憲法38条2項・319条1項）。虚偽排除説／人権擁護説／違法排除説。自白のみでは有罪にできない（憲法38条3項・319条2項）＝補強法則、補強の範囲は罪体説。"},
+    {t:"伝聞法則", kw:"伝聞法則",
+     hook:"「Aがそう言っていた」という証言。なぜそのままでは使えないのか",
+     aim:"伝聞か非伝聞かを、要証事実との関係で判定できる",
+     b:"320条1項。知覚・記憶・表現叙述の各過程に誤りの危険があり反対尋問で吟味できないため。要証事実との関係で伝聞性が決まる（内容の真実性が問題か）。犯行計画メモ・現場供述。"},
+    {t:"伝聞例外（321条以下）", kw:"伝聞例外",
+     hook:"証人が来ない。捜査段階の調書は法廷に出せるのか",
+     aim:"321条1項1〜3号・2項・3項の条文を素早く選べる",
+     b:"321条1項2号（検面調書）＝供述不能または相反供述＋特信情況。3号は供述不能＋不可欠性＋特信情況。実況見分調書は3項、鑑定書は4項。328条は自己矛盾供述による弾劾。"},
+    {t:"訴因変更", kw:"訴因変更",
+     hook:"審理を進めるうちに、起訴状に書かれた事実とずれてきた",
+     aim:"要否と可否を、防御の観点から分けて書ける",
+     b:"要否＝審判対象の画定に必要な事実の変動か、防御に実質的不利益か。可否＝公訴事実の同一性（312条1項）＝基本的事実関係の同一性＋非両立性。訴因の特定（256条3項）と併せて。"},
+    {t:"接見交通権", kw:"接見交通権",
+     hook:"取調べ中だからと、弁護人との面会を後回しにされた",
+     aim:"39条3項の但書を、捜査の必要と防御権の調整として書ける",
+     b:"弁護人との接見交通は身体拘束された被疑者の防御の要（憲法34条・39条1項）。捜査の必要があるときの日時指定（39条3項）は防御権を不当に制限してはならない（最大判平11・安藤事件）。"},
+    {t:"勾留の要件", kw:"勾留",
+     hook:"逮捕から何日で釈放されるのか、何が続く理由になるのか",
+     aim:"身体拘束の期間計算と要件を条文で言い切れる",
+     b:"60条＝罪を犯したことを疑うに足りる相当な理由＋住居不定・罪証隠滅のおそれ・逃亡のおそれのいずれか。勾留請求は逮捕から72時間内、勾留は原則10日＋やむを得ない場合10日延長。"},
+    {t:"公訴権濫用論", kw:"公訴権濫用",
+     hook:"同じことをした他の人は起訴されていない。この起訴は許されるのか",
+     aim:"起訴裁量への司法統制の限界を判例の水準で書ける",
+     b:"起訴便宜主義（248条）を前提に、公訴提起が職務犯罪を構成するような極限的な場合に限り無効（最決昭55・チッソ川本事件）。嫌疑なき起訴・差別的起訴・おとり捜査を素材に。"},
+  ],
+  "商法": [
+    {t:"善管注意義務と経営判断原則", kw:"善管注意義務",
+     hook:"投資判断が外れて会社に損が出た。取締役は賠償するのか",
+     aim:"423条の任務懈怠を、判断過程と内容に分けて審査できる",
+     b:"善管注意義務（330条→民644条）と忠実義務（355条）は同質（最大判昭45）。経営判断は、判断の前提となった事実認識に不注意な誤りがなく、判断過程・内容が著しく不合理でなければ責任なし（最判平22・アパマンショップ）。"},
+    {t:"利益相反取引", kw:"利益相反取引",
+     hook:"社長が自分の会社に、自分の土地を売った",
+     aim:"356条・365条・423条3項を一続きで処理できる",
+     b:"直接取引・間接取引ともに取締役会（非設置なら株主総会）の承認が必要。承認なき取引は会社から無効主張可、第三者には相対的無効。承認があっても任務懈怠責任は残り、自己のための直接取引は無過失責任（428条）。"},
+    {t:"株主総会決議の瑕疵", kw:"株主総会決議",
+     hook:"招集通知が1人に届いていなかった。決議はどうなるのか",
+     aim:"取消し・無効確認・不存在の3つの訴えを迷わず選べる",
+     b:"取消し＝招集手続・決議方法の法令定款違反、著しく不公正、特別利害関係人による著しく不当な決議（831条、3か月の出訴期間）。無効＝内容の法令違反（830条2項）。不存在＝物理的・法的に存在せず（同1項）。"},
+    {t:"取締役の第三者責任", kw:"取締役の第三者責任",
+     hook:"倒産した会社の取引先が、社長個人に請求してきた",
+     aim:"429条の法定責任説を前提に要件を組み立てられる",
+     b:"職務執行についての悪意重過失＋第三者の損害（429条1項）。法定責任説（最大判昭44）。直接損害・間接損害、名目的取締役・登記簿上の取締役の責任が典型論点。"},
+    {t:"株主代表訴訟", kw:"株主代表訴訟",
+     hook:"会社が身内の取締役を訴えない。株主にできることは",
+     aim:"847条の手続要件を順に踏んで書ける",
+     b:"6か月前から引き続き株式を保有→会社に提訴請求→60日以内に不提訴なら株主が提起。勝訴の利益は会社に帰属。不提訴理由の通知、担保提供命令、和解、多重代表訴訟も周辺で。"},
+    {t:"新株発行の瑕疵", kw:"募集株式の発行",
+     hook:"経営陣が自分の味方に新株を大量に割り当てた",
+     aim:"差止めと無効の訴えを、時点で使い分けられる",
+     b:"著しく不公正な方法（210条2号）＝主要目的が支配権維持なら不公正。発行前は差止め、発行後は無効の訴え（828条1項2号）で無効事由は限定（差止仮処分違反・通知公告欠缺）。"},
+    {t:"表見代表取締役", kw:"表見代表取締役",
+     hook:"「専務」の肩書で契約した人に、代表権はなかった",
+     aim:"354条の外観法理を、相手方の主観要件まで書ける",
+     b:"社長・副社長その他会社を代表する権限を有すると認められる名称の付与＋善意の第三者。重過失は悪意と同視。会社の帰責性（名称使用の黙認）を事実で示す。9条・908条2項と並べて。"},
+    {t:"剰余金配当の財源規制", kw:"剰余金配当",
+     hook:"利益が出ていないのに配当した。誰が返すのか",
+     aim:"461・462条の責任主体と範囲を条文で示せる",
+     b:"分配可能額（461条2項）を超える配当は違法。株主は交付を受けた金銭等の帳簿価額に相当する金銭の支払義務、業務執行者・議案提案取締役は連帯して同額の支払義務（462条）。総会決議があっても免れない。"},
+    {t:"株式の譲渡制限", kw:"譲渡制限株式",
+     hook:"承認なしに売られた株。会社との関係ではどうなるのか",
+     aim:"承認手続と売買価格決定までの流れを追える",
+     b:"譲渡承認請求（136・137条）→承認機関の決定→不承認なら会社または指定買取人が買取り、価格は協議・裁判所の決定（144条）。会社に対する関係では譲渡は効力を生じないが当事者間では有効（最判昭48）。"},
+    {t:"組織再編と反対株主", kw:"組織再編",
+     hook:"合併に反対しても数で押し切られる。少数株主に残る手は",
+     aim:"買取請求と差止め・無効の訴えを整理して書ける",
+     b:"反対株主の株式買取請求（785・797・806条）で公正な価格。略式・簡易組織再編の要件。差止請求（784条の2等）、無効の訴え（828条1項7号以下）は提訴期間6か月。"},
+  ],
+  "実務基礎": [
+    {t:"貸金返還請求の要件事実", kw:"要件事実",
+     hook:"「貸した金を返せ」と言うために、訴状に何を書けば足りるのか",
+     aim:"請求原因を過不足なく立てられる（民事実務の出発点）",
+     b:"①金銭の返還合意②金銭の交付③弁済期の合意④弁済期の到来。利息請求なら利息の合意と期間。抗弁は弁済・相殺・消滅時効・免除。ブロックダイアグラムで整理する。"},
+    {t:"否認と抗弁の区別", kw:"否認と抗弁",
+     hook:"「借りていない」と「もう返した」は、書面上どう違うのか",
+     aim:"主張の位置づけを誤らず、証明責任の所在を示せる",
+     b:"否認＝相手方に証明責任のある事実の存在を争う。抗弁＝これと両立し、自己に証明責任のある別の事実の主張。理由付き否認・積極否認との区別、間接事実の位置づけも押さえる。"},
+    {t:"所有権に基づく明渡請求", kw:"明渡請求",
+     hook:"自分の土地に他人の建物が建っている。何を主張して出ていってもらうか",
+     aim:"物権的請求権の要件事実を、占有と権原の攻防で書ける",
+     b:"請求原因＝原告の所有＋被告の占有。抗弁＝占有権原（賃借権・使用貸借）。再抗弁＝賃料不払いによる解除、背信行為。所有権の来歴（もと所有＋取得原因）の書き方に注意。"},
+    {t:"民事保全", kw:"民事保全",
+     hook:"判決が出るころには財産が消えている。今日打てる手は",
+     aim:"仮差押えと仮処分を、被保全権利と必要性で選べる",
+     b:"仮差押え＝金銭債権の執行保全。係争物に関する仮処分＝特定物の現状維持。仮の地位を定める仮処分＝著しい損害・急迫の危険。被保全権利＋保全の必要性を疎明、担保。"},
+    {t:"弁護士倫理・利益相反", kw:"利益相反",
+     hook:"以前に相談を受けた相手方から、今度は事件を頼まれた",
+     aim:"職務基本規程の条文を挙げて結論を出せる",
+     b:"職務基本規程27条（職務を行い得ない事件）・28条（同意により行い得る場合）。相手方の協議を受けて信頼関係が生じた事件、受任中の事件の相手方からの依頼。共同事務所は57条。"},
+    {t:"公判前整理手続", kw:"公判前整理手続",
+     hook:"法廷が始まる前に、争点と証拠はどこまで決まっているのか",
+     aim:"刑事実務の手続の流れを、証拠開示まで含めて説明できる",
+     b:"316条の2以下。検察官の証明予定事実記載書→類型証拠開示（316条の15）→予定主張明示→主張関連証拠開示（316条の20）。手続終了後の新証拠請求の制限（316条の32）が効いてくる。"},
+  ],
+};
+Object.entries(TOPICS).forEach(([s, arr]) => arr.forEach(x => { x._subj = s; }));
+const SUBJ_ALIAS = { "民事訴訟法":"民訴法", "刑事訴訟法":"刑訴法", "会社法":"商法",
+  "法律実務基礎":"実務基礎", "実務基礎科目":"実務基礎", "民訴":"民訴法", "刑訴":"刑訴法" };
+const shortSubj = s => { const c = clean(s); return SUBJ_ALIAS[c] || c; };
+
+// ════════════════════════════════════════════
+//  乱数（シード付きシャッフル＝再読み込みで顔ぶれが変わる）
+// ════════════════════════════════════════════
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0;
+  let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffle(arr, seed){ const r=rng(seed); const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const daysAgoLabel = ds => {
+  if(!ds) return "";
+  const t=new Date(); t.setHours(0,0,0,0);
+  const d=new Date(ds); d.setHours(0,0,0,0);
+  const n=Math.round((t-d)/86400000);
+  return n<=0?"今日":n===1?"昨日":`${n}日前`;
+};
+
+// ════════════════════════════════════════════
+//  提案カードの生成（context.json → カード群）
+// ════════════════════════════════════════════
+function buildCards(ctx){
+  const cards = [];
+  const cleanKw = k => clean(k).replace(/^[\s・\-#>|]+/,"").replace(/[\s|]+$/,"").trim();
+  const JUNK = ["能力不足","判断迷い","判断ミス","読解エラー","理解不十分","未整理","エラー","得点喪失","知識不足","レベル","object Object"];
+  const ok = t => t && t.length>=2 && !JUNK.some(j=>t.includes(j));
+  // 進捗メタ文（「6日前に学習済。今週の目標：短答2周目」等）は中身が無いのでカード文言に使わない
+  const META = /(日前に学習済|今週の目標|今週まだ|周目|あと\d+問|だけ解く|問解く|今日の一手)/;
+  const dayIdx = Math.floor(Date.now()/86400000);
+  const push = c => { c.subject = shortSubj(c.subject||""); cards.push(c); };
+
+  // ── 論点ライブラリ参照 ──
+  const pool = s => TOPICS[shortSubj(s)] || [];
+  const hit = (x, k) => k.includes(x.kw) || x.kw.includes(k) || x.t.includes(k) || k.includes(x.t)
+      || (x.syn||[]).some(sy => k.includes(sy) || sy.includes(k));
+  const lookup = (subject, kw) => {
+    const k = clean(kw); if(!k) return null;
+    const inSubj = pool(subject).find(x => hit(x, k));
+    if(inSubj) return inSubj;
+    // 科目のタグがずれていても論点が見つかるように全科目から探す
+    for(const arr of Object.values(TOPICS)){ const f = arr.find(x => hit(x, k)); if(f) return f; }
+    return null;
+  };
+  // 「A（B・C）・D」を括弧の外の中黒だけで分割する
+  const splitTerms = str => {
+    const out=[]; let cur="", depth=0;
+    for(const ch of String(str||"")){
+      if("（(［[「『".includes(ch)) depth++;
+      if("）)］]」』".includes(ch)) depth = Math.max(0, depth-1);
+      if(depth===0 && "・、,／/".includes(ch)){ out.push(cur); cur=""; continue; }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.map(x=>x.trim()).filter(Boolean);
+  };
+  // 日付で回す＝毎日ちがう論点が前に出る
+  const rotate = (subject, n, off) => {
+    const arr = pool(subject); if(!arr.length) return [];
+    const st = (dayIdx + (off||0) + clean(subject).length*3) % arr.length;
+    return Array.from({length: Math.min(n||1, arr.length)}, (_,i)=> arr[(st+i)%arr.length]);
+  };
+  const chatPrompt = (subj, topic) => `${subj}の「${topic}」を復習します。次の3つを、スマホで読める短さでお願いします。
+① この論点が実際に問題になる具体的な事案を1つ、短い物語で（登場人物と出来事がわかる形で）。
+② 答案で必ず書く論証の骨（規範）を3行で。
+③ 覚えておく論点キーワードを5個。`;
+
+  // ① スペーシング復習（最優先）— 前回学習日から「今日ふれる論点」を1つ立てる
+  (ctx?.spacing_items||[]).forEach(it=>{
+    const subj = shortSubj(it.subject);
+    if(!subj || subj==="—" || !pool(subj).length) return;
+    const kws = (it.keywords||[]).map(cleanKw).filter(ok).slice(0,3);
+    const tp = (kws.length && lookup(subj, kws[0])) || rotate(subj, 1, 7)[0];
+    if(!tp) return;
+    const lab = it.interval_label || daysAgoLabel(it.date);
+    push({
+      cat:"review", subject:subj,
+      title: tp.hook,
+      why: tp.b,
+      aim: tp.aim,
+      topic: tp.t,
+      when: lab ? `${lab}の続き` : "",
+      kws: kws.length ? kws : [tp.kw],
+      chat: chatPrompt(subj, tp.t),
+      score: 100,
+    });
+  });
+
+  // ② 繰り返し苦手
+  (ctx?.persistent_weak||[]).forEach(p=>{
+    const kw = cleanKw(p.keyword);
+    if(!ok(kw)) return;
+    const subj = shortSubj(p.subject||"");
+    const tp = lookup(subj, kw);
+    push({
+      cat:"weak", subject: (tp && tp._subj) || subj,
+      title: tp ? tp.hook : `「${kw}」でまた止まらないために`,
+      why: tp ? tp.b : `これまで${p.count||"複数"}回つまずいた論点。ここを潰すと一気に伸びます。`,
+      aim: tp ? tp.aim : `${kw}を自分の言葉で説明できる状態にする`,
+      topic: tp ? tp.t : kw,
+      when: p.count ? `${p.count}回目` : "", kws:[kw],
+      chat: chatPrompt(subj||"この科目", tp ? tp.t : kw),
+      score: 96,
+    });
+  });
+
+  // ③ 直近で間違えた論点
+  (ctx?.wrong_topics||[]).map(cleanKw).filter(ok).slice(0,5).forEach(t=>{
+    const subj = shortSubj(ctx?.subject||"");
+    const tp = lookup(subj, t);
+    push({
+      cat:"weak", subject: (tp && tp._subj) || subj,
+      title: tp ? tp.hook : `前回ひっかかった「${t}」を上書きする`,
+      why: tp ? tp.b : "記憶が新しいうちに、正しい形で入れ直しましょう。",
+      aim: tp ? tp.aim : `${t}の規範を思い出さずに書ける`,
+      topic: tp ? tp.t : t,
+      kws:[t],
+      chat: chatPrompt(subj||"この科目", tp ? tp.t : t),
+      score: 90,
+    });
+  });
+
+  // ④ 今日やること — 進捗の数字はチップに逃がし、本文は論点そのものにする
+  (ctx?.today_tasks||[]).forEach(t=>{
+    const subj = shortSubj(t.subject);
+    if(!subj || !pool(subj).length) return;
+    const late = String(t.status||"").includes("遅れ");
+    // action の「論点：A・B・C」だけを拾う（メタ文は捨てる）
+    let acts = [];
+    const mm = /論点[：:]\s*(.+)$/.exec(clean(t.action)||"");
+    if(mm) acts = splitTerms(mm[1]).map(cleanKw).filter(ok).filter(x=>!META.test(x)).slice(0,3);
+    // 書かれている論点のどれかがライブラリに当たればそれを使う（当たらなければ日替わりで1つ）
+    let tp = null, matched = "";
+    for(const a of acts){ const f = lookup(subj, a); if(f){ tp = f; matched = a; break; } }
+    if(!tp) tp = rotate(subj, 1, 0)[0];
+    if(!tp) return;
+    const gap = Math.max(0, (t.target_q||0) - (t.actual_q||0));
+    push({
+      cat:"task", subject:subj,
+      title: tp.hook,
+      why: tp.b,
+      aim: tp.aim,
+      topic: tp.t,
+      when: gap ? (late ? `残り${gap}問・遅れ` : `残り${gap}問`) : (late ? "遅れ" : "今週"),
+      kws: [tp.kw].concat(acts.map(a=>a.replace(/[（(][^）)]*[）)]/g,"").trim()))
+             .filter(Boolean)
+             .filter((v,i,a)=> a.findIndex(x=> x===v || x.includes(v))===i)
+             .slice(0,3),
+      chat: chatPrompt(subj, tp.t),
+      score: late ? 94 : 76,
+    });
+  });
+
+  // ⑤ 今日の1問
+  if(ctx?.quiz_question){
+    const q = clean(ctx.quiz_question);
+    push({
+      cat:"quiz", subject: shortSubj(ctx.subject||""),
+      title: q.length>58 ? q.slice(0,58)+"…" : q,
+      why: "まず自分の頭で答えを出してから、下のボタンで答え合わせ。",
+      aim: ctx.quiz_answer_hint ? `答えの根拠：${clean(ctx.quiz_answer_hint)}` : "",
+      kws: ctx.quiz_answer_hint ? splitTerms(ctx.quiz_answer_hint).slice(0,2) : [],
+      chat: `次の問いに答えてください：「${q}」。①結論②根拠条文・判例③理由を3行で、そのあと関連する論点キーワードを5個挙げてください。`,
+      score: 86,
+    });
+  }
+
+  // ⑥ 弱点の核心 / 次の狙い
+  if(ctx?.weak_points_text && clean(ctx.weak_points_text).length>10){
+    const w = clean(ctx.weak_points_text);
+    push({
+      cat:"weak", subject: shortSubj(ctx.subject||""),
+      title: `つまずきの正体を言葉にする`,
+      why: w.length>90 ? w.slice(0,90)+"…" : w,
+      aim: "「なんとなく苦手」を、具体的な1論点まで落とす",
+      kws:[],
+      chat:`私がつまずきやすいのは次の点です：「${w}」。①この弱点が実際に問われる事案を1つ、短い物語で②克服のために押さえる規範を3行③論点キーワード5個、をお願いします。`,
+      score: 84,
+    });
+  }
+  if(ctx?.next_focus && clean(ctx.next_focus).length>10){
+    const n = clean(ctx.next_focus);
+    push({
+      cat:"task", subject: shortSubj(ctx.subject||""),
+      title:`次に伸ばすならここ`,
+      why: n.length>90 ? n.slice(0,90)+"…" : n,
+      aim: "次の1週間で何を取りにいくかを決める",
+      kws:[],
+      chat:`次の方針で進めます：「${n}」。①この方針が効いてくる具体的な出題場面②押さえる規範3行③論点キーワード5個、をお願いします。`,
+      score: 74,
+    });
+  }
+
+  // ⑦ 今日解いた問題の振り返り
+  (ctx?.today_review_items||[]).slice(0,4).forEach(it=>{
+    const axis = clean(it.axis || it.theme || "");
+    const subj = shortSubj(ctx?.subject||"");
+    const tp = axis ? lookup(subj, axis) : null;
+    push({
+      cat:"review", subject:subj,
+      title: axis ? `Q${it.q_num}でずれた「${axis.length>18?axis.slice(0,18)+"…":axis}」` : `Q${it.q_num} をもう一度`,
+      why: tp ? tp.b : "解いた直後よりも、時間をおいた今のほうが定着します。",
+      aim: tp ? tp.aim : "同じ形で出たときに、迷わず同じ結論を出せる",
+      topic: tp ? tp.t : axis,
+      kws: axis ? [axis] : [],
+      chat: chatPrompt(subj||"この科目", tp ? tp.t : (axis || `Q${it.q_num}の論点`)),
+      score: 80,
+    });
+  });
+
+  // ⑧ 論点ライブラリ（ストーリー付き）— 今日の科目を優先しつつ全科目から
+  const todaySubj = shortSubj(ctx?.subject || WEEKLY[new Date().getDay()] || "");
+  Object.entries(TOPICS).forEach(([subj, arr])=>{
+    arr.forEach((tp, i)=>{
+      push({
+        cat:"tip", subject:subj,
+        title: tp.hook,
+        why: tp.b,
+        aim: tp.aim,
+        topic: tp.t,
+        when: tp.t,
+        kws:[tp.kw],
+        chat: chatPrompt(subj, tp.t),
+        score: 44 + (subj===todaySubj ? 20 : 0) + ((dayIdx+i)%3),
+      });
+    });
+  });
+
+  // ⑨ 今日の条文
+  (ctx?.articles||[]).forEach(a=>{
+    const ref  = clean(typeof a==="object" ? (a.ref || a.article || a.name || "") : a);
+    const gist = clean(typeof a==="object" ? (a.gist || "") : "");
+    if(!ok(ref)) return;
+    push({
+      cat:"read", subject: shortSubj(ctx?.subject||""), read:false,
+      title: gist ? `${ref}：${gist}` : `${ref}を素読みする`,
+      why: "条文の言葉のまま覚えておくと、当てはめが一段速くなります。",
+      aim: "条文番号と文言をそのまま引ける状態にする",
+      kws:[ref],
+      chat:`「${ref}」について、①条文の文言②この条文が実際に効いてくる具体的な場面を1つ、短い物語で③関連する論点キーワード5個、をお願いします。`,
+      score: 50,
+    });
+  });
+
+  // ⑩ 読みもの
+  (ctx?.news_feed||[]).slice(0,6).forEach(n=>{
+    const ti = clean(n.title); if(!ti) return;
+    push({
+      cat:"read", subject:"", read:true, url:n.url||"",
+      title: ti.length>54 ? ti.slice(0,54)+"…" : ti,
+      why: n.source ? `📎 ${clean(n.source)}` : "気分転換に、関連トピックを1本。",
+      kws:[],
+      score: 28,
+    });
+  });
+
+  return cards;
+}
+
+// ════════════════════════════════════════════
+//  あいさつ（時間帯・連続日数）
+// ════════════════════════════════════════════
+function updateStreak(){
+  const today = new Date().toISOString().slice(0,10);
+  const last = localStorage.getItem("rf_last");
+  let cnt = parseInt(localStorage.getItem("rf_streak")||"0");
+  if(last===today){ /* 同日 */ }
+  else {
+    const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    cnt = (last===y) ? cnt+1 : 1;
+    localStorage.setItem("rf_streak", cnt);
+    localStorage.setItem("rf_last", today);
+  }
+  return cnt;
+}
+function renderGreeting(){
+  const h = new Date().getHours();
+  let hi, sub;
+  if(h<6){ hi="早起きおつかれさまです 🌅"; sub="この静かな時間が、いちばん効きます。"; }
+  else if(h<11){ hi="おはようございます ☀️"; sub="今日の一歩、ここから。"; }
+  else if(h<17){ hi="おつかれさまです 📖"; sub="スキマ時間にひとつ、復習を。"; }
+  else if(h<22){ hi="今日もおつかれさまです 🌇"; sub="寝る前の復習がいちばん残ります。"; }
+  else { hi="おつかれさまです 🌙"; sub="ひとつだけ確認して、よく休みましょう。"; }
+  $("greet-hi").textContent = hi;
+  $("greet-sub").textContent = sub;
+  const streak = updateStreak();
+  const count = (typeof VISIBLE_COUNT==="number") ? VISIBLE_COUNT : ALL_CARDS.length;
+  const subj = ctx?.subject || chatSubject;
+  const doneCnt = todayReviewCount();
+  $("greet-stats").innerHTML =
+    `<span class="stat-pill">🔥 <span class="num">${streak}</span>日つづけて</span>`
+  + `<span class="stat-pill">✨ 今日の提案 <span class="num">${count}</span>件</span>`
+  + (doneCnt?`<span class="stat-pill tap done-pill" id="done-pill">✅ 今日 <span class="num">${doneCnt}</span>件復習</span>`:"")
+  + (subj?`<span class="stat-pill">📌 きょうは <span class="num">${esc(subj)}</span></span>`:"");
+  const dp = $("done-pill"); if(dp) dp.onclick = openLog;
+}
+
+// ════════════════════════════════════════════
+//  フィード描画
+// ════════════════════════════════════════════
+// ── 出しすぎ防止（同じ提案が何度も出てくるのを抑える）──
+// カードごとに「最後に表示した日」を覚えておき、クールダウン中はスコアを下げる
+let SHOWN = (()=>{ try{ const v=JSON.parse(localStorage.getItem("rf_shown")||"{}");
+    return (v && typeof v==="object" && !Array.isArray(v)) ? v : {}; } catch(e){ return {}; } })();
+function saveShown(){
+  // 60日より古い記録は捨てる
+  const lim = dayKey(Date.now()-60*86400000);
+  Object.keys(SHOWN).forEach(k=>{ if(SHOWN[k] < lim) delete SHOWN[k]; });
+  localStorage.setItem("rf_shown", JSON.stringify(SHOWN));
+}
+const COOLDOWN = { tip:16, read:8, weak:6, review:5, task:4, quiz:2, ai:6 };
+function daysSince(dstr){
+  if(!dstr) return 999;
+  const n = Math.round((new Date(dayKey(Date.now())) - new Date(dstr)) / 86400000);
+  return isNaN(n) ? 999 : n;
+}
+const FEED_MAX = 22;
+
+function activeCards(){
+  let list = ALL_CARDS.slice();
+  list = list.filter(c => !isDismissedToday(cardId(c)));   // 今日スワイプで完了したものは出さない
+  if(subjFilter) list = list.filter(c => c.subject===subjFilter || (c.cat==="read" && !c.subject));
+  if(catFilter!=="all") list = list.filter(c => c.cat===catFilter);
+
+  // 直近に出した／直近に復習したカードは後ろへ下げる
+  list.forEach(c=>{
+    const id = cardId(c);
+    const cd = COOLDOWN[c.cat] || 7;
+    const dShown = daysSince(SHOWN[id]);
+    const dDone  = REVIEWED[id] ? daysSince(dayKey(REVIEWED[id])) : 999;
+    let pen = 0;
+    if(dShown > 0 && dShown < cd) pen += Math.round((cd - dShown) / cd * 55);
+    if(dDone  > 0 && dDone  < cd) pen += Math.round((cd - dDone)  / cd * 35);
+    c._eff = c.score - pen;
+  });
+
+  const day = Math.floor(Date.now()/86400000);
+  const sh = shuffle(list, day*97 + reshuffle*31 + (subjFilter?subjFilter.length:0));
+  sh.sort((a,b)=> b._eff - a._eff);
+
+  // 同じ論点が別カテゴリで重複するのを1つにまとめる
+  const seen = new Set();
+  const uniq = [];
+  sh.forEach(c=>{
+    const key = clean(c.topic || (c.kws&&c.kws[0]) || c.title);
+    if(key && seen.has(key)) return;
+    if(key) seen.add(key);
+    uniq.push(c);
+  });
+
+  // 出しすぎない（絞ったほうが手がつく）
+  return (catFilter==="all" && !subjFilter) ? uniq.slice(0, FEED_MAX) : uniq.slice(0, FEED_MAX*2);
+}
+
+function markShown(list){
+  const d = dayKey(Date.now());
+  list.forEach(c=>{ SHOWN[cardId(c)] = d; });
+  saveShown();
+}
+
+function renderCatBar(){
+  const present = new Set(ALL_CARDS
+    .filter(c => !subjFilter || c.subject===subjFilter || (c.cat==="read"&&!c.subject))
+    .map(c=>c.cat));
+  let html = `<button class="cat-chip ${catFilter==="all"?"on":""}" data-c="all">すべて</button>`;
+  Object.entries(CAT).forEach(([k,v])=>{
+    if(present.has(k)) html += `<button class="cat-chip ${catFilter===k?"on":""}" data-c="${k}">${v.icon} ${v.label}</button>`;
+  });
+  $("cat-bar").innerHTML = html;
+  $("cat-bar").querySelectorAll(".cat-chip").forEach(b=>{
+    b.onclick = ()=>{ catFilter=b.dataset.c; renderFeed(); };
+  });
+}
+
+function cardHTML(c){
+  const m = CAT[c.cat];
+  const rv = REVIEWED[cardId(c)];
+  const kws = (c.kws||[]).filter(Boolean).map(k=>
+    `<a class="c-kw" href="${obsSearch(k)}" onclick="event.stopPropagation()">🔍 ${esc(k)}</a>`).join("");
+  const ax = c.aiLink || aiRef(c);
+  const aiChip = ax
+    ? `<a class="c-kw c-ai" href="${esc(ax.href)}" onclick="event.stopPropagation()">⤴ AI横断 ${esc(ax.id)}${ax.sp?" ⚑":""}</a>`
+    : "";
+  const foot = c.read && c.url
+    ? `<a class="c-go" style="text-align:center;text-decoration:none;line-height:1.2" href="${esc(c.url)}" target="_blank" onclick="event.stopPropagation()">記事を開く ↗</a>`
+    : `<button class="c-go">${rv?"🔁 もう一度":"▶ これを復習"}</button>`
+      + `<a class="c-memo" href="${obsMemo(c)}" onclick="event.stopPropagation()">📝 メモ</a>`;
+  return `<div class="card${rv?" done":""}" style="--cc:${m.color};--ccbg:${m.bg}">
+    <div class="c-top">
+      <div class="c-ico">${m.icon}</div>
+      <span class="c-badge">${m.label}</span>
+      ${rv?`<span class="c-done">✓ 済</span>`:""}
+      ${c.when?`<span class="c-when">${esc(c.when)}</span>`:""}
+    </div>
+    <div class="c-title">${esc(c.title)}</div>
+    ${c.why?`<div class="c-why">${esc(c.why)}</div>`:""}
+    ${c.aim?`<div class="c-aim">🎯 ${esc(c.aim)}</div>`:""}
+    ${(kws||aiChip)?`<div class="c-kws">${kws}${aiChip}</div>`:""}
+    <div class="c-foot">${foot}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  右スワイプで完了して消す ＋ 取り消し
+// ════════════════════════════════════════════
+const SW_THRESH = 90;
+function attachSwipe(cardEl, behindEl, c){
+  let sx=0, sy=0, dx=0, dragging=false, moved=false, pid=null;
+  cardEl.addEventListener("pointerdown", e=>{
+    if(e.target.closest("a")) return;          // 📝メモ・🔍キーワードのリンクは通常タップ
+    dragging=true; pid=e.pointerId; sx=e.clientX; sy=e.clientY; dx=0; moved=false;
+    cardEl.style.animation="none"; cardEl.style.transition="none";
+  });
+  cardEl.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    dx = e.clientX - sx; const dy = e.clientY - sy;
+    if(!moved){
+      if(Math.abs(dx)>8 && Math.abs(dx) > Math.abs(dy)+2){ moved=true; try{cardEl.setPointerCapture(pid);}catch(_){} }
+      else return;
+    }
+    e.preventDefault();
+    const vx = dx<0 ? dx*0.28 : dx;
+    cardEl.style.transform = `translateX(${vx}px)`;
+    if(behindEl) behindEl.style.opacity = Math.max(0, Math.min(vx/SW_THRESH, 1));
+  });
+  const end = ()=>{
+    if(!dragging) return; dragging=false;
+    cardEl.style.transition = "transform .25s ease";
+    if(dx > SW_THRESH){
+      cardEl.style.transform = "translateX(115%)";
+      if(behindEl) behindEl.style.opacity = 1;
+      setTimeout(()=> completeCard(c), 190);
+    } else {
+      cardEl.style.transform = "";
+      if(behindEl) behindEl.style.opacity = 0;
+    }
+    if(moved){ cardEl._sw = true; setTimeout(()=>{ cardEl._sw=false; }, 350); }
+  };
+  cardEl.addEventListener("pointerup", end);
+  cardEl.addEventListener("pointercancel", end);
+}
+function completeCard(c){
+  recordReview(c);                 // 復習済みとして記録（連続日数・件数に反映）
+  DISMISSED[cardId(c)] = dayKey(Date.now()); saveDismissed();
+  lastDismissed = { id: cardId(c), title: c.title };
+  showUndo(c.title);
+  renderFeed();
+}
+function showUndo(title){
+  const bar = $("undo-bar");
+  const short = title.length>16 ? title.slice(0,16)+"…" : title;
+  $("undo-text").textContent = `「${short}」を完了にしました`;
+  bar.classList.add("show");
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(()=> bar.classList.remove("show"), 4000);
+}
+$("undo-btn").onclick = ()=>{
+  if(!lastDismissed) return;
+  delete DISMISSED[lastDismissed.id]; saveDismissed();
+  lastDismissed = null;
+  $("undo-bar").classList.remove("show");
+  renderFeed();
+};
+
+let VISIBLE_COUNT = 0;
+function renderFeed(){
+  const list = activeCards();
+  VISIBLE_COUNT = list.length;
+  renderGreeting();
+  renderCatBar();
+  const heroSlot = $("hero-slot");
+  const cardsEl  = $("cards");
+
+  if(list.length===0){
+    heroSlot.innerHTML="";
+    cardsEl.innerHTML = `<div class="empty">提案がありません。<br>右上の ↺ で再読み込みしてみてください。</div>`;
+    $("more-row").classList.add("hidden");
+    return;
+  }
+
+  // HERO（先頭・読みもの以外を優先）
+  const heroIdx = list.findIndex(c=>!c.read);
+  const hero = list[heroIdx>=0?heroIdx:0];
+  const rest = list.filter(c=>c!==hero);
+  const m = CAT[hero.cat];
+  const heroRv = REVIEWED[cardId(hero)];
+  heroSlot.innerHTML = `<div class="sw-wrap"><div class="sw-behind">✅ 完了！</div><div class="hero" id="hero-card">
+    <div class="h-label">${m.icon} ${m.label}${hero.subject?" ・ "+esc(hero.subject):""}${heroRv?` &nbsp;<span class="h-done">✓ 復習済み</span>`:""}</div>
+    <div class="h-title">${esc(hero.title)}</div>
+    <div class="h-why">${esc(hero.why||"")}</div>
+    ${hero.aim?`<div class="h-aim">🎯 ${esc(hero.aim)}</div>`:""}
+    <button class="h-go">${heroRv?"🔁 もう一度復習する":"▶ いますぐ復習する"}</button>
+  </div></div>`;
+  const heroEl = $("hero-card");
+  heroEl.onclick = ()=>{ if(heroEl._sw) return; launch(hero); };
+  attachSwipe(heroEl, heroEl.parentElement.querySelector(".sw-behind"), hero);
+
+  cardsEl.innerHTML = rest.map(c=>`<div class="sw-wrap"><div class="sw-behind">✅ 完了！</div>${cardHTML(c)}</div>`).join("");
+  // カードのクリック割り当て＋スワイプ
+  [...cardsEl.querySelectorAll(".card")].forEach((el,i)=>{
+    const c = rest[i];
+    const go = el.querySelector(".c-go");
+    attachSwipe(el, el.parentElement.querySelector(".sw-behind"), c);
+    if(!(c.read && c.url)){
+      el.onclick = ()=>{ if(el._sw) return; launch(c); };
+      if(go && go.tagName==="BUTTON") go.onclick = (e)=>{ e.stopPropagation(); if(el._sw) return; launch(c); };
+    }
+  });
+  $("cards-head").innerHTML = (subjFilter ? `✨ ${esc(subjFilter)}の提案` : "✨ あなたへの提案")
+    + `<div class="swipe-hint">👉 カードを右にスワイプすると「完了」して消えます</div>`;
+  $("more-row").classList.remove("hidden");
+  markShown(list);
+}
+
+// ════════════════════════════════════════════
+//  画面遷移
+// ════════════════════════════════════════════
+function showSetup(){ $("setup").classList.remove("hidden"); $("scroll").classList.add("hidden"); $("chat-wrap").classList.add("hidden"); }
+function showFeed(){
+  $("setup").classList.add("hidden"); $("chat-wrap").classList.add("hidden");
+  $("scroll").classList.remove("hidden");
+  document.querySelector(".sbt[data-s='']").classList.toggle("on", subjFilter==="");
+}
+function showChatScreen(){ $("setup").classList.add("hidden"); $("scroll").classList.add("hidden"); $("chat-wrap").classList.remove("hidden"); }
+
+// ════════════════════════════════════════════
+//  提案 → チャット起動
+// ════════════════════════════════════════════
+function launch(card){
+  recordReview(card);
+  if(card.read && card.url){ renderFeed(); window.open(card.url, "_blank"); return; }
+  chatSubject = card.subject || ctx?.subject || chatSubject;
+  curTopic = { title: clean(card.topic || card.title), subject: chatSubject };
+  $("chat-subj").textContent = chatSubject;
+  history = [];
+  $("chat-area").innerHTML = "";
+  showChatScreen();
+  addBubble("ai", `📌 「${card.title}」を復習しましょう！`);
+  const prompt = card.chat || `${chatSubject}の復習を始めます。①今日おさえる論点が実際に問題になる具体的な事案を1つ、短い物語で②答案で書く規範を3行③論点キーワード5個、をお願いします。`;
+  // 開いた瞬間はAIを呼ばない（コスト0）。タップで初めてHaikuに問い合わせる。
+  const row=document.createElement("div"); row.className="msg ai";
+  const btn=document.createElement("button"); btn.className="qb";
+  btn.style.cssText="font-weight:700";
+  btn.textContent="▶ 具体例つきで解説してもらう（Haiku）";
+  btn.addEventListener("click", ()=>{ row.remove(); send(prompt, {hidden:true}); });
+  row.appendChild(btn); $("chat-area").appendChild(row); scrollBottom();
+}
+
+// ════════════════════════════════════════════
+//  AI五者横断ノート（同じ Pages の study/ai/）への橋渡し
+//  カードのキーワードから、その論点を実際に解いた問題へ飛ぶ。
+// ════════════════════════════════════════════
+const AI_BASE = "ai/";
+let AIX = null;                                  // {qs:{ref:{s,t,sp}}, kw:{語:[[ref,重み]]}}
+
+async function loadAiIndex(){
+  try {
+    const res = await fetch(`${AI_BASE}data/kwindex.json?t=${Date.now()}`, {cache:"no-cache"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    AIX = await res.json();
+  } catch(e){ AIX = null; }                      // 無くてもカードは今までどおり出す
+}
+
+const ART_RE = /(\d{1,4})条(?:の(\d{1,2}))?/;
+function artCanon(k){                            // 「刑訴法321条3項」も「321条」も同じ鍵にする
+  const m = ART_RE.exec(k||"");
+  return m ? (m[2] ? `${m[1]}条の${m[2]}` : `${m[1]}条`) : null;
+}
+function aiLookup(term, subject){
+  if(!AIX || !term) return null;
+  let rows = AIX.kw[term];
+  if(!rows){
+    const c = artCanon(term);
+    if(c){                                       // 条文は番号で厳密に（部分一致だと321条3項が21条に当たる）
+      for(const key in AIX.kw){ if(artCanon(key) === c){ rows = AIX.kw[key]; break; } }
+    } else if(term.length >= 3){                 // 語は3字以上でだけゆるく当てる
+      for(const key in AIX.kw){
+        if(key.length >= 3 && (key.includes(term) || term.includes(key))){ rows = AIX.kw[key]; break; }
+      }
+    }
+  }
+  if(!rows || !rows.length) return null;
+  const same = subject ? rows.filter(r => shortSubj(AIX.qs[r[0]]?.s||"") === subject) : [];
+  return (same.length ? same : rows)[0][0];      // 同じ科目を優先、無ければ重みの高いもの
+}
+/* ビューアの「⇢ 復習に回す」で入れた問題。同じオリジンなので localStorage を直接読める。 */
+function aiQueue(){
+  try { return JSON.parse(localStorage.getItem("rf_queue") || "{}"); } catch(e){ return {}; }
+}
+function aiHref(day, id){
+  return `${AI_BASE}#${encodeURIComponent(day)}/${encodeURIComponent(id)}`;
+}
+/* 「自分で入れた問題」と「AIが割れた問題」をカードにする。 */
+function aiCards(){
+  const out = [];
+  const seen = new Set();
+  const q = aiQueue();
+  Object.keys(q).forEach(ref=>{
+    const it = q[ref] || {};
+    if(!it.d || !it.id) return;
+    seen.add(ref);
+    out.push({ cat:"ai", subject: shortSubj(it.s||""), title: it.t || `${it.id} を見直す`,
+      why: "iPad で「復習に回す」に入れた問題です。五者の解説をもう一度。",
+      when: it.at ? `${it.at} に登録` : "",
+      aiLink: { href: aiHref(it.d, it.id), id: it.id, sp:false },
+      chat: `予備試験の${shortSubj(it.s||"")}「${it.t||it.id}」を復習します。要点を3行、ひっかかりやすい点を2つ、短く。`,
+      score: 96 });
+  });
+  if(AIX){                                    // AIの答えが割れている問題＝まず疑うべきところ
+    Object.keys(AIX.qs).forEach(ref=>{
+      const m = AIX.qs[ref];
+      if(!m.sp || seen.has(ref)) return;
+      const [day, id] = ref.split("|");
+      out.push({ cat:"ai", subject: shortSubj(m.s||""), title: m.t || `${id}`,
+        why: "AIの答えが割れています。条文と判例に自分で当たる合図。",
+        when: `⚑ ${day.slice(0,10)}`,
+        aiLink: { href: aiHref(day, id), id, sp:true },
+        chat: `予備試験の${shortSubj(m.s||"")}「${m.t||id}」について、答えが割れやすい理由と、条文上の決め手を短く。`,
+        score: 70 });
+    });
+  }
+  return out;
+}
+
+function aiRef(c){
+  if(!AIX) return null;
+  const terms = [...(c.kws||[]), c.topic].filter(Boolean).map(clean);
+  for(const t of terms){
+    const ref = aiLookup(t, c.subject);
+    if(ref && AIX.qs[ref]){
+      const [day, id] = ref.split("|");
+      const meta = AIX.qs[ref];
+      const subj = shortSubj(meta.s || "");
+      return { href: `${AI_BASE}#${encodeURIComponent(day)}/${encodeURIComponent(id)}`,
+               // 別科目の問題に飛ぶときは科目も出す（民法のカードから民訴の問題、などがある）
+               id: (subj && subj !== c.subject ? subj + " " : "") + id,
+               sp: !!meta.sp };
+    }
+  }
+  return null;
+}
+
+// ════════════════════════════════════════════
+//  コンテキスト読み込み
+// ════════════════════════════════════════════
+async function loadFeed(){
+  showFeed();
+  $("hero-slot").innerHTML = `<div class="skel" style="height:150px;margin-bottom:16px"></div>`;
+  $("cards").innerHTML = `<div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+  $("more-row").classList.add("hidden");
+  try {
+    const res = await fetch(CTX_URL());
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    ctx = await res.json();
+  } catch(e){
+    ctx = null;
+  }
+  ALL_CARDS = buildCards(ctx).concat(aiCards());
+  // データが薄い時の保険：論点ライブラリ（TOPICS）から必ずカードが立つ
+  renderFeed();
+  if(!AIX){                                    // 索引は後から届いてもよい
+    loadAiIndex().then(()=>{
+      if(!AIX) return;
+      ALL_CARDS = buildCards(ctx).concat(aiCards());
+      renderFeed();
+    });
+  }
+}
+
+// ════════════════════════════════════════════
+//  Claude (Haiku) チャット
+// ════════════════════════════════════════════
+function buildSystem(){
+  let extra = "";
+  if(ctx){
+    if(ctx.keywords?.length) extra += `\n今日のキーワード: ${ctx.keywords.join("、")}`;
+    if(ctx.wrong_topics?.length) extra += `\n最近つまずいた論点: ${ctx.wrong_topics.slice(0,6).join("、")}`;
+    if(ctx.weak_points_text) extra += `\n弱点メモ: ${ctx.weak_points_text}`;
+    if(ctx.next_focus) extra += `\n次に伸ばす狙い: ${ctx.next_focus}`;
+  }
+  extra += `\n（キーワードは先頭文字が欠けていることがある。上の文脈で自然に補って解釈する）`;
+  return `あなたは司法試験予備試験の学習コーチです。受験生（53歳・予備試験2028年合格目標・毎朝3時半起きで学習）の復習を助けます。
+
+現在の科目: ${chatSubject}${extra}
+
+【最重要ルール（全返答で厳守）】
+- 聞き返さない・確認しない。テーマが曖昧・断片的でも、科目と文脈から最も自然な論点を推定し、そのまま論点キーワードを出す。「〜についてですか？」「言い直してください」等の質問返しは絶対禁止。
+- テーマが「前回の内容」「前回学習した内容」のように具体性が無い場合でも聞き返さず、その科目（現在の科目）で試験頻出の代表的な論点キーワードを5〜7個挙げる。範囲が広いことを理由に確認を求めない。
+- テーマのキーワードは先頭の文字が欠けていることがある（例：「業譲渡」→「営業譲渡」、「追」→「追完」、「続と無効の訴え」→「手続と無効の訴え」）。文脈から自然に補って解釈する。
+- 参考条文を添える（復習用）。基本論点には対応する基本条文を必ず1つ、末尾に「(参考: ○条)」の形で添える（例：同時履行の抗弁=533条、相殺=505条、請負=632条、表見代表取締役=会社法354条）。現行法（民法は2020年債権法改正後）に基づく。準用条文・枝番・細かい特則など確信が持てないものだけ省略してよい。推測で番号をでっち上げるのは禁止。番号を効力の断定根拠にはしない。
+- 効力を一方的に断定しない（「必ず無効」「当然に有効」等は禁止）。「原則」と「例外」、または満たすべき要件をセットで示すにとどめる。
+- 現行法の用語で書く（例：民法は「瑕疵担保責任」ではなく「契約不適合責任」。相殺は単独行為＝意思表示であり「相殺契約」ではない）。会社法は「商法」と書かず「会社法」。
+- 断片的な暗記を促さない。「誰が・何を・どの要件で」を意識させる。
+- 難易度は「基本」。学説の細かい対立や重箱ひっかけは避ける。
+
+【基本の進め方＝「論点キーワード」】
+- ユーザーがテーマを示したら、覚えておくべき論点キーワードだけを挙げる。これが基本の返答。解説文は書かない。クイズ・問題は基本的に出さない。
+- 出力は必ず次の形にする：
+  ・1行目にテーマを短く1文。
+  ・続けて「・論点名 — 一言の手がかり（1文以内・効力の断定なし）　(参考: ○条)」を5〜7個、箇条書きで。基本条文はできるだけ各行に添える（確信が持てない番号だけ省略）。
+  ・最後に必ず1行：「※条数と効力は自分の教材で必ず確認」。
+- スマホ・タブレットで読む前提。全体を短くまとめる。
+
+【追加のやりとり】
+- 「もっと詳しく」→ キーワードのうち特に重要な1つを3〜5文で深掘り（確実な参考条文は添えてよいが、要件と例外の形で。効力は断定しない）。
+- 「別の5つ」→ 先に挙げたものと重複しない別の論点キーワードを5〜7個挙げる。
+- 「やさしく」→ 専門用語を減らし、噛み砕いて説明し直す。
+- 「関連論点」→ そのテーマに関連する論点名を挙げ、各1文で手がかりを添える。
+- 追加の質問には、その点だけ短く（3〜5文）答える。
+- 「問題を出して」「1問」など明示された時だけ、答えが一つに決まる基本確認問題を1問だけ出す（正解は必ず1つに確定してから出す）。ユーザーが答えたら1行目で正誤を明示し、1〜2文で理由を述べる（条文番号は書かない）。
+- 「まとめて」と言われたら今日の論点キーワードを3つに絞って締める。`;
+}
+
+async function send(text, opts={}){
+  if(busy) return;
+  const userText = (text||"").trim();
+  if(!userText) return;
+  if(!opts.hidden) addBubble("user", userText);
+  else if(opts.intro) addBubble("ai", `📌 「${opts.intro}」を復習しましょう！`);
+  $("msg-in").value=""; autoResize();
+  $("send").disabled=true; busy=true;
+  const typing = addTyping();
+  try{
+    history.push({role:"user", content:userText});
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({model:API_MODEL, max_tokens:600, system:buildSystem(), messages:history}),
+    });
+    const data = await res.json();
+    typing.remove();
+    if(data.type==="error" || data.error){
+      addBubble("ai", `⚠️ エラー：${data.error?.message||"不明"}\n\nAPIキーが切れている場合は、右上の ↺ → キーを入れ直してください。`);
+    } else {
+      const reply = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("") || "（応答なし）";
+      addBubble("ai", reply);
+      history.push({role:"assistant", content:reply});
+    }
+  } catch(e){
+    typing.remove();
+    addBubble("ai", "⚠️ 通信エラー。ネット接続を確認してください。");
+  }
+  busy=false; $("send").disabled = ($("msg-in").value.trim()==="");
+  scrollBottom();
+}
+
+function addBubble(role, text){
+  const row=document.createElement("div"); row.className=`msg ${role}`;
+  const bub=document.createElement("div"); bub.className="bub"; bub.textContent=text;
+  const t=document.createElement("div"); t.className="msg-time";
+  t.textContent=new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  row.appendChild(bub); row.appendChild(t); $("chat-area").appendChild(row); scrollBottom();
+}
+function addTyping(){
+  const row=document.createElement("div"); row.className="msg ai";
+  row.innerHTML=`<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  $("chat-area").appendChild(row); scrollBottom(); return row;
+}
+function scrollBottom(){ requestAnimationFrame(()=>{ $("chat-area").scrollTop=$("chat-area").scrollHeight; }); }
+function autoResize(){ const el=$("msg-in"); el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,130)+"px"; }
+
+// ════════════════════════════════════════════
+//  イベント
+// ════════════════════════════════════════════
+// 科目バー
+document.querySelectorAll(".sbt").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".sbt").forEach(b=>b.classList.remove("on"));
+    btn.classList.add("on");
+    const s = btn.dataset.s;
+    if(!$("chat-wrap").classList.contains("hidden")){
+      // チャット中：科目切替
+      if(s){ chatSubject=s; curTopic={title:"",subject:s}; $("chat-subj").textContent=s;
+        send(`科目を${s}に切り替えます。${s}の今日押さえるべき論点キーワードを5〜7個、簡潔に挙げてください。`); }
+      else { backToFeed(); }
+    } else {
+      subjFilter = s; catFilter="all"; reshuffle=0; renderFeed();
+    }
+  });
+});
+
+// 設定
+$("api-key-input").addEventListener("input", e=>{ $("save-key-btn").disabled = e.target.value.trim().length<10; });
+$("save-key-btn").addEventListener("click", ()=>{
+  const k=$("api-key-input").value.trim(); if(!k) return;
+  apiKey=k; localStorage.setItem("anthropic_api_key", k); loadFeed();
+});
+
+// 別の提案
+$("more-btn").addEventListener("click", ()=>{ reshuffle++; renderFeed();
+  $("scroll").scrollTo({top:0, behavior:"smooth"}); });
+
+// チャット入力
+$("msg-in").addEventListener("input", ()=>{ autoResize(); $("send").disabled=$("msg-in").value.trim()===""||busy; });
+$("msg-in").addEventListener("keydown", e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); if(!$("send").disabled) send($("msg-in").value); }});
+$("send").addEventListener("click", ()=>{ if(!$("send").disabled) send($("msg-in").value); });
+document.querySelectorAll(".qb").forEach(b=> b.addEventListener("click", ()=>{ if(!busy) send(b.dataset.m); }));
+
+// ════════════════════════════════════════════
+//  復習ログ 表示
+// ════════════════════════════════════════════
+function fmtLogDay(ts){
+  const w=["日","月","火","水","木","金","土"];
+  const d=new Date(ts);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dd=new Date(ts); dd.setHours(0,0,0,0);
+  const n=Math.round((today-dd)/86400000);
+  const base=`${d.getMonth()+1}月${d.getDate()}日（${w[d.getDay()]}）`;
+  return n===0?base+" ・ 今日":n===1?base+" ・ 昨日":base;
+}
+function renderLog(){
+  const el=$("log-list");
+  if(reviewLog.length===0){
+    el.innerHTML=`<div class="log-empty">まだ復習の記録がありません。<br>カードの「▶ これを復習」から始めると、<br>ここに残っていきます。</div>`;
+    return;
+  }
+  const items=[...reviewLog].reverse();
+  let html=""; let curDay="";
+  items.forEach(e=>{
+    const dk=dayKey(e.ts);
+    if(dk!==curDay){ curDay=dk; html+=`<div class="log-day">${fmtLogDay(e.ts)}</div>`; }
+    const m=CAT[e.cat]||{icon:"📘",label:"復習",color:"var(--acc)",bg:"var(--surf2)"};
+    const time=new Date(e.ts).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+    html+=`<div class="log-item">
+      <div class="li-ico" style="background:${m.bg};color:${m.color}">${m.icon}</div>
+      <div class="li-body">
+        <div class="li-title">${esc(e.title)}</div>
+        <div class="li-meta">${e.subject?esc(e.subject)+" ・ ":""}${m.label}</div>
+      </div>
+      <span class="li-time">${time}</span>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+function openLog(){ renderLog(); $("log-ov").classList.remove("hidden"); }
+function closeLog(){ $("log-ov").classList.add("hidden"); }
+
+function backToFeed(){
+  document.querySelectorAll(".sbt").forEach(b=>b.classList.remove("on"));
+  document.querySelector(".sbt[data-s='']").classList.add("on");
+  subjFilter=""; catFilter="all"; loadFeed();
+}
+$("back-btn").addEventListener("click", backToFeed);
+
+// 復習ログ
+$("log-btn").addEventListener("click", openLog);
+$("log-close").addEventListener("click", closeLog);
+$("log-ov").addEventListener("click", e=>{ if(e.target===$("log-ov")) closeLog(); });
+$("log-clear").addEventListener("click", ()=>{
+  if(!confirm("復習ログをすべて消去しますか？（マークも消えます）")) return;
+  reviewLog=[]; localStorage.removeItem("rf_review_log"); rebuildReviewed();
+  renderLog();
+  if(!$("scroll").classList.contains("hidden")) renderFeed();
+});
+
+// テーマ
+function applyTheme(dark){ document.body.classList.toggle("dark", dark);
+  $("theme-btn").textContent = dark?"☀️":"🌙"; localStorage.setItem("rf_theme", dark?"dark":"light"); }
+$("theme-btn").addEventListener("click", ()=> applyTheme(!document.body.classList.contains("dark")));
+
+// 文字サイズ
+const SIZES=[15,17,19]; let sizeIdx=parseInt(localStorage.getItem("rf_font")||"0");
+function applyFont(){ document.body.style.fontSize=SIZES[sizeIdx]+"px";
+  $("font-btn").textContent = sizeIdx===0?"A":sizeIdx===1?"A+":"A++"; }
+$("font-btn").addEventListener("click", ()=>{ sizeIdx=(sizeIdx+1)%SIZES.length; localStorage.setItem("rf_font",sizeIdx); applyFont(); });
+
+// リセット
+$("reset-btn").addEventListener("click", ()=>{
+  checkUpdate();
+  if(!confirm("リセットしますか？")) return;
+  if(!confirm("APIキーは残しますか？（キャンセルで削除）")){ localStorage.removeItem("anthropic_api_key"); apiKey=""; }
+  history=[]; ctx=null; subjFilter=""; catFilter="all"; reshuffle=0;
+  $("chat-area").innerHTML="";
+  init();
+});
+
+// ════════════════════════════════════════════
+//  起動
+// ════════════════════════════════════════════
+// ── 自動アップデート ──
+// ホーム画面に追加したPWAはHTMLを強くキャッシュするため、
+// version.json（キャッシュ無効で取得）と食い違ったら ?v= 付きで読み直す。
+async function checkUpdate(){
+  try{
+    const r = await fetch(`version.json?t=${Date.now()}`, {cache:"no-store"});
+    if(!r.ok) return;
+    const v = await r.json();
+    if(!v || !v.version || v.version === APP_VER) return;
+    let once = false;
+    try{ once = sessionStorage.getItem("rf_upd") === v.version; }catch(e){}
+    if(once) return;                       // 読み直しても古いままなら無限ループを避ける
+    try{ sessionStorage.setItem("rf_upd", v.version); }catch(e){}
+    location.replace(location.pathname + "?v=" + encodeURIComponent(v.version));
+  }catch(e){ /* オフラインなどは無視 */ }
+}
+
+// ════════════════════════════════════════════
+//  🎙 自分で説明 → 🤖 AI添削 → 🧠 今日覚える → 🔁 再回答
+//  ・保存するのは4項目（結論／条文／ひっかけ／30秒暗唱）＋自分のズレ だけ
+//  ・AIとの会話全文は保存しない（会話は捨てる。間違いだけ残す）
+// ════════════════════════════════════════════
+const MEMO_KEY = "rf_memo_cards";
+let memoCards = (()=>{ try{ const v=JSON.parse(localStorage.getItem(MEMO_KEY)||"[]");
+  return Array.isArray(v)?v:[]; }catch(e){ return []; } })();
+function saveMemos(){
+  if(memoCards.length>200) memoCards = memoCards.slice(-200);
+  try{ localStorage.setItem(MEMO_KEY, JSON.stringify(memoCards)); }catch(e){}
+  renderMemoBadge();
+}
+// いま説明している論点（チャットを開くたびに更新）
+let curTopic = { title:"", subject:"" };
+function topicLabel(){ return clean(curTopic.title) || chatSubject; }
+const memoId = (subj,title) => `${clean(subj)}::${clean(title)}`;
+
+function renderMemoBadge(){
+  const n = memoCards.filter(m=> (m.hit||0) < 2).length;
+  const b = $("memo-badge");
+  b.textContent = n > 99 ? "99" : n;
+  b.classList.toggle("hidden", n === 0);
+}
+
+// ── 音声入力（対応端末のみ。iOSはキーボードの🎤を使う）──
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, recogOn = false;
+function stopRecog(){ if(recog){ try{ recog.stop(); }catch(e){} } recogOn=false;
+  const b=$("sp-rec"); if(b){ b.classList.remove("rec-on"); b.textContent="🎤 話して入力"; } }
+
+function toggleRecog(){
+  const ta = $("sp-ta"), btn = $("sp-rec");
+  if(!SR){ // iOS Safari 等：標準のディクテーションへ誘導
+    ta.focus();
+    $("sp-hint").innerHTML = "キーボードの <b>🎤</b> を押すと、話した内容がそのまま文字になります。";
+    return;
+  }
+  if(recogOn){ stopRecog(); return; }
+  recog = new SR();
+  recog.lang = "ja-JP"; recog.continuous = true; recog.interimResults = true;
+  const base = ta.value ? ta.value.replace(/\s+$/,"") + "\n" : "";
+  recog.onresult = ev => {
+    let fixed = "", interim = "";
+    for(let i=ev.resultIndex; i<ev.results.length; i++){
+      const t = ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) fixed += t; else interim += t;
+    }
+    if(fixed) ta.value = (ta.value ? ta.value.replace(/\s+$/,"")+"" : "") + fixed;
+    $("sp-hint").textContent = interim ? "…" + interim : "";
+    $("sp-go").disabled = ta.value.trim().length < 4;
+  };
+  recog.onerror = e => { $("sp-hint").textContent = "音声が使えませんでした（"+e.error+"）。キーボードの🎤でも入力できます。"; stopRecog(); };
+  recog.onend = () => { if(recogOn){ try{ recog.start(); }catch(e){ stopRecog(); } } };
+  try{ recog.start(); recogOn = true;
+    btn.classList.add("rec-on"); btn.textContent = "■ 停止";
+    $("sp-hint").textContent = "聞いています…";
+  }catch(e){ stopRecog(); }
+  ta.value = base;
+}
+
+// ── ① 自己説明シート ──
+function closeSheet(){ stopRecog(); const el=$("speak-ov"); if(el) el.remove(); }
+
+function openSpeak(){
+  closeSheet();
+  const ov = document.createElement("div");
+  ov.className = "sheet-ov"; ov.id = "speak-ov";
+  ov.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head"><b>🎙 自分の言葉で説明する</b>
+        <button class="icon-btn" id="sp-x">✕</button></div>
+      <div class="sheet-sub">「<b>${esc(topicLabel())}</b>」<br>
+        <b>答えを見る前に</b>、30秒で言い切る。<br>
+        短答ならこう／論文ならこう、の順で話すと形になります。</div>
+      <textarea class="sp-ta" id="sp-ta" placeholder="例：招集通知が1人に届いていない事案。短答なら…。論文なら…。"></textarea>
+      <div class="sheet-btns">
+        <button class="sb-sub"  id="sp-rec">🎤 話して入力</button>
+        <button class="sb-main" id="sp-go" disabled>🤖 添削してもらう</button>
+      </div>
+      <div class="sheet-sub" id="sp-hint" style="margin:9px 0 0">${
+        SR ? "" : "キーボードの <b>🎤</b> を押すと、話した内容がそのまま文字になります。"}</div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeSheet(); });
+  $("sp-x").addEventListener("click", closeSheet);
+  $("sp-rec").addEventListener("click", toggleRecog);
+  $("sp-ta").addEventListener("input", ()=>{ $("sp-go").disabled = $("sp-ta").value.trim().length < 4; });
+  $("sp-go").addEventListener("click", ()=>{
+    const mine = $("sp-ta").value.trim();
+    closeSheet();
+    gradeSelf(mine);
+  });
+  setTimeout(()=>{ if(!SR) $("sp-ta").focus(); }, 120);
+}
+
+// ── ② AI添削（6行だけ返させる）──
+function selfSystem(){
+  return `あなたは司法試験予備試験の答案添削者です。受験生（53歳・2028年合格目標）が自分の言葉で口述した理解を添削します。
+
+科目: ${chatSubject}
+論点: ${topicLabel()}
+
+【出力形式】必ず次の6行だけを出力する。各項目はかならず1行に収める（項目の中で改行しない）。見出しの角括弧は変えない。前置き・あいさつ・箇条書き・補足説明は一切書かない。
+[ズレ] 受験生の説明のうち、誤り・危うい断定・概念の混同を1つだけ指摘する。正しければ「なし（要点は押さえられています）」とだけ書く。
+[修正] そのズレをどう直すか。1〜2文。
+[結論] この論点の結論。原則と例外をセットで1文。
+[条文] 根拠条文と理由を1つ。確信が持てる条文だけ書き、不確かなら条文名のみにする。番号のでっち上げは禁止。
+[ひっかけ] 短答で引っかかりやすい点を「〜と考えがちだが〜」の形で1文。
+[暗唱] 声に出して20〜30秒で言える要約。1〜2文。
+
+【内容のルール】
+- 効力を一方的に断定しない（「必ず無効」「当然に有効」等は禁止）。原則と例外、または満たすべき要件をセットで示す。
+- 現行法の用語で書く（民法は「契約不適合責任」。会社法を「商法」と書かない）。
+- 難易度は「基本」。学説の細かい対立や重箱のひっかけは避ける。
+- 受験生の説明が断片的・不明瞭でも聞き返さない。科目と論点から最も自然な内容を推定してそのまま添削する。
+- 無効・取消し・不存在のような効果の区別が絡む論点では、その区別をズレ／ひっかけで必ず拾う。`;
+}
+
+function parseFb(txt){
+  const get = k => {
+    const m = txt.match(new RegExp("\\[" + k + "\\][ 　:：]*([^\\n]*)"));
+    return m ? clean(m[1]) : "";
+  };
+  return { gap:get("ズレ"), fix:get("修正"), conc:get("結論"),
+           art:get("条文"), trap:get("ひっかけ"), recite:get("暗唱") };
+}
+
+async function gradeSelf(mine){
+  if(busy) return;
+  addBubble("user", "🎙 " + mine);
+  busy = true; $("send").disabled = true;
+  const typing = addTyping();
+  try{
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: API_MODEL, max_tokens: 500, system: selfSystem(),
+        messages: [{role:"user", content:`論点：${topicLabel()}\n\n私の説明：\n${mine}`}],
+      }),
+    });
+    const data = await res.json();
+    typing.remove();
+    if(data.type==="error" || data.error){
+      addBubble("ai", `⚠️ エラー：${data.error?.message||"不明"}\n\nAPIキーが切れている場合は、右上の ↺ → キーを入れ直してください。`);
+    } else {
+      const raw = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+      const fb = parseFb(raw);
+      if(!fb.conc && !fb.gap){ addBubble("ai", raw || "（応答なし）"); }
+      else { showFeedback(fb, mine); }
+    }
+  }catch(e){
+    typing.remove();
+    addBubble("ai", "⚠️ 通信エラー。ネット接続を確認してください。");
+  }
+  busy = false; $("send").disabled = ($("msg-in").value.trim()==="");
+  scrollBottom();
+}
+
+// 添削結果を吹き出し＋「🧠 今日覚える に保存」ボタンで出す
+function showFeedback(fb, mine){
+  const noGap = /^なし/.test(fb.gap||"");
+  const txt = [
+    noGap ? "🟢 ズレなし　" + fb.gap : "🔴 自分のズレ\n" + fb.gap,
+    fb.fix ? (noGap ? "" : "\n🟢 修正\n" + fb.fix) : "",
+    "\n─────────",
+    fb.conc   ? "結論｜"    + fb.conc   : "",
+    fb.art    ? "条文｜"    + fb.art    : "",
+    fb.trap   ? "ひっかけ｜"+ fb.trap   : "",
+    fb.recite ? "30秒暗唱｜"+ fb.recite : "",
+  ].filter(Boolean).join("\n");
+  addBubble("ai", txt);
+
+  const row = document.createElement("div"); row.className = "msg ai";
+  row.style.cssText = "max-width:100%;width:100%;";
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "display:flex;gap:7px;width:100%";
+  const b1 = document.createElement("button");
+  b1.className = "sp-btn sp-memo"; b1.textContent = "🧠 今日覚える に保存";
+  b1.addEventListener("click", ()=>{ row.remove(); openMemoEdit(fb, mine); });
+  const b2 = document.createElement("button");
+  b2.className = "sp-btn sp-mic"; b2.style.flex = "0 0 44%"; b2.textContent = "🔁 もう一度言い直す";
+  b2.addEventListener("click", ()=>{ row.remove(); openSpeak(); });
+  wrap.appendChild(b1); wrap.appendChild(b2);
+  row.appendChild(wrap); $("chat-area").appendChild(row); scrollBottom();
+}
+
+// ── ③ 今日覚える（4項目だけ。編集して保存）──
+function openMemoEdit(fb, mine, existingId){
+  closeSheet();
+  const ov = document.createElement("div");
+  ov.className = "sheet-ov"; ov.id = "speak-ov";
+  const f = (id,label,val,cls,rows) => `
+    <div class="fld ${cls||""}"><label>${label}</label>
+      <textarea id="${id}" rows="${rows||2}">${esc(val||"")}</textarea></div>`;
+  ov.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head"><b>🧠 今日覚える</b>
+        <button class="icon-btn" id="sp-x">✕</button></div>
+      <div class="sheet-sub">「<b>${esc(topicLabel())}</b>」<br>
+        残すのはこれだけ。長い解説は残さない。</div>
+      ${f("me-gap","🔴 自分のズレ（いちばん価値のあるデータ）", fb.gap && !/^なし/.test(fb.gap) ? fb.gap : "", "gap")}
+      ${f("me-conc","① 結論")}
+      ${f("me-art","② 条文・理由")}
+      ${f("me-trap","③ ひっかけ")}
+      ${f("me-rec","④ 30秒暗唱","", "rec")}
+      <div class="sheet-btns">
+        <button class="sb-sub"  id="me-obs">📤 Obsidian</button>
+        <button class="sb-main" id="me-save">🧠 保存する</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  $("me-conc").value = fb.conc||""; $("me-art").value = fb.art||"";
+  $("me-trap").value = fb.trap||""; $("me-rec").value = fb.recite||"";
+  ["me-gap","me-conc","me-art","me-trap","me-rec"].forEach(id=>{
+    const el=$(id); el.style.height="auto"; el.style.height=Math.max(42,el.scrollHeight)+"px";
+    el.addEventListener("input", ()=>{ el.style.height="auto"; el.style.height=el.scrollHeight+"px"; });
+  });
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeSheet(); });
+  $("sp-x").addEventListener("click", closeSheet);
+
+  const collect = () => ({
+    id: existingId || memoId(curTopic.subject||chatSubject, topicLabel()),
+    subject: clean(curTopic.subject||chatSubject),
+    title: topicLabel(),
+    gap: $("me-gap").value.trim(), fix: fb.fix||"",
+    conc: $("me-conc").value.trim(), art: $("me-art").value.trim(),
+    trap: $("me-trap").value.trim(), recite: $("me-rec").value.trim(),
+    mine: (mine||"").slice(0,400),
+  });
+  $("me-save").addEventListener("click", ()=>{ saveMemo(collect()); closeSheet();
+    toast("🧠 今日覚える に保存しました"); });
+  $("me-obs").addEventListener("click", ()=>{ const c=saveMemo(collect()); toObsidian(c, false); closeSheet(); });
+}
+
+function saveMemo(c){
+  const i = memoCards.findIndex(m=>m.id===c.id);
+  if(i>=0){
+    const old = memoCards[i];
+    memoCards[i] = Object.assign({}, old, c, { ts:Date.now(), hit:old.hit||0, ng:old.ng||0 });
+    memoCards.push(memoCards.splice(i,1)[0]);
+  } else {
+    memoCards.push(Object.assign({ ts:Date.now(), hit:0, ng:0, last:0 }, c));
+  }
+  saveMemos();
+  return memoCards[memoCards.length-1];
+}
+
+// ── Obsidian へ（日次メモ／昇格）──
+function memoBody(c){
+  return [
+    `### ${clean(c.title)}`,
+    c.conc   ? `- 結論：${clean(c.conc)}`     : "",
+    c.art    ? `- 条文：${clean(c.art)}`      : "",
+    c.trap   ? `- ひっかけ：${clean(c.trap)}` : "",
+    c.gap    ? `- 🔴自分のズレ：${clean(c.gap)}` : "",
+    c.recite ? `- 一撃：${clean(c.recite)}`   : "",
+  ].filter(Boolean).join("\n");
+}
+// promote=false → その日の「今日覚える」ノート / true → 科目の「よく間違える論点」ノート
+function toObsidian(c, promote){
+  const dir = obsMemoDir(c.subject);
+  const file = promote ? `${dir}/よく間違える論点`
+                       : `${dir}/今日覚える_${dayKey(Date.now())}`;
+  const body = memoBody(c) + (promote ? `\n- 間違えた回数：${c.ng||0}` : "");
+  location.href = `obsidian://new?vault=${encodeURIComponent(OBS_VAULT)}`
+    + `&file=${encodeURIComponent(file)}&append=true&content=${encodeURIComponent(body+"\n\n")}`;
+}
+
+// ── ④ 今日覚える デッキ（想起モード：まず隠す）──
+let memoOpen = {};   // id → 答えを表示中か
+function renderMemoDeck(){
+  const list = $("memo-list");
+  if(!memoCards.length){
+    list.innerHTML = `<div class="log-empty">まだありません。<br><br>
+      提案を開いて <b>🎙 自分で説明する</b> → <b>🤖 添削</b> → <b>🧠 今日覚える</b><br>
+      の順に押すと、ここに4項目だけが貯まります。</div>`;
+    return;
+  }
+  const sorted = memoCards.slice().sort((a,b)=>
+    ((b.ng||0)-(a.ng||0)) || (b.ts-a.ts));
+  list.innerHTML = "";
+  sorted.forEach(c=>{
+    const hot = (c.ng||0) >= 2;
+    const shown = !!memoOpen[c.id];
+    const el = document.createElement("div");
+    el.className = "memo-card" + (hot?" hot":"");
+    el.innerHTML = `
+      <div class="mc-top">
+        ${c.subject?`<span class="mc-subj">${esc(c.subject)}</span>`:""}
+        ${(c.ng||0)?`<span class="mc-miss">✕${c.ng}</span>`:""}
+        ${(c.hit||0)?`<span class="mc-subj">〇${c.hit}</span>`:""}
+        <div class="mc-title">${esc(c.title)}</div>
+      </div>
+      ${shown ? `
+        <div class="mc-body">
+          ${c.conc?`<div><span class="k">結論</span>　${esc(c.conc)}</div>`:""}
+          ${c.art ?`<div><span class="k">条文</span>　${esc(c.art)}</div>`:""}
+          ${c.trap?`<div><span class="k">ひっかけ</span>　${esc(c.trap)}</div>`:""}
+          ${c.gap ?`<div class="mc-gap"><span class="k">🔴ズレ</span>　${esc(c.gap)}</div>`:""}
+        </div>
+        ${c.recite?`<div class="mc-recite">🗣 ${esc(c.recite)}</div>`:""}` : ``}
+      <div class="mc-btns">
+        <button data-a="see">${shown?"🙈 隠す":"👁 答えを見る"}</button>
+        <button class="ok" data-a="ok">〇 言えた</button>
+        <button class="ng" data-a="ng">✕ ズレた</button>
+        <button data-a="re">🔁 再回答</button>
+        <button data-a="obs">📤 Obsidian</button>
+        ${hot?`<button class="up" data-a="up">⭐️ 昇格</button>`:""}
+      </div>`;
+    el.querySelectorAll("button").forEach(b=> b.addEventListener("click", ()=>{
+      const a = b.dataset.a;
+      if(a==="see"){ memoOpen[c.id] = !memoOpen[c.id]; renderMemoDeck(); }
+      else if(a==="ok"){ c.hit=(c.hit||0)+1; c.last=Date.now(); memoOpen[c.id]=false; saveMemos(); renderMemoDeck(); }
+      else if(a==="ng"){ c.ng =(c.ng ||0)+1; c.last=Date.now(); memoOpen[c.id]=true;  saveMemos(); renderMemoDeck(); }
+      else if(a==="re"){ closeMemoDeck(); reAnswer(c); }
+      else if(a==="obs"){ toObsidian(c, false); }
+      else if(a==="up"){ toObsidian(c, true); }
+    }));
+    list.appendChild(el);
+  });
+}
+function openMemoDeck(){ renderMemoDeck(); $("memo-ov").classList.remove("hidden"); }
+function closeMemoDeck(){ $("memo-ov").classList.add("hidden"); }
+
+// 🔁 再回答：その論点でチャットを開き、すぐ自己説明シートを出す
+function reAnswer(c){
+  chatSubject = c.subject || chatSubject;
+  curTopic = { title:c.title, subject:c.subject };
+  $("chat-subj").textContent = chatSubject;
+  history = [];
+  $("chat-area").innerHTML = "";
+  showChatScreen();
+  addBubble("ai", `🔁 「${c.title}」をもう一度。\n答えを見ずに、30秒で言い切ってみてください。`);
+  openSpeak();
+}
+
+let toastTimer = null;
+function toast(msg){
+  const bar = $("undo-bar");
+  $("undo-text").textContent = msg;
+  $("undo-btn").classList.add("hidden");
+  bar.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ bar.classList.remove("show");
+    $("undo-btn").classList.remove("hidden"); }, 2600);
+}
+
+// ── イベント ──
+$("memo-btn").addEventListener("click", openMemoDeck);
+$("memo-close").addEventListener("click", closeMemoDeck);
+$("memo-ov").addEventListener("click", e=>{ if(e.target===$("memo-ov")) closeMemoDeck(); });
+$("chat-memo-btn").addEventListener("click", openMemoDeck);
+$("speak-btn").addEventListener("click", openSpeak);
+$("memo-clear").addEventListener("click", ()=>{
+  const before = memoCards.length;
+  memoCards = memoCards.filter(m=> (m.hit||0) < 2);
+  if(before === memoCards.length){ alert("〇が2回以上ついたカードはまだありません。"); return; }
+  saveMemos(); renderMemoDeck();
+});
+
+function init(){
+  const now=new Date(); const d=["日","月","火","水","木","金","土"];
+  $("hd-date").textContent = `${now.getMonth()+1}/${now.getDate()}（${d[now.getDay()]}）`;
+  $("app-ver").textContent = APP_VER;
+  checkUpdate();
+  applyTheme((localStorage.getItem("rf_theme")||"light")==="dark");
+  applyFont();
+  renderMemoBadge();
+  if(!apiKey){ showSetup(); }
+  else { loadFeed(); }
+}
+init();
+</script>
+</body>
+</html>

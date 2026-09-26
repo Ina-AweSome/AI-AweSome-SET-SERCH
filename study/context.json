@@ -1,0 +1,289 @@
+{
+  "subject": "刑訴法",
+  "date": "2026-09-26",
+  "keywords": [],
+  "wrong_qs": [],
+  "wrong_topics": [],
+  "today_logs": [],
+  "spacing_items": [
+    {
+      "interval_label": "",
+      "date": "2026-09-25",
+      "subject": "民事訴訟法",
+      "questions_count": 0,
+      "wrong_qs": [],
+      "keywords": [],
+      "claude_notes": [
+        {
+          "title": "Claude先生 1",
+          "content": "## 1. 出題趣旨・視点\n\n本問の軸は、処分権主義の現れである246条（申立事項と判決事項の一致）の趣旨から判断基準を導き、2つの判決に当てはめることです。流れは次のとおりです。\n\n1. 訴訟物の特定：まず審判対象を確定する（170万円の不存在確認）\n2. 246条の趣旨から規範を立てる：①原告の合理的意思に合致するか、②被告の不意打ちにならないか\n3. 小問(1)：申立ての範囲内で原告に不利な事実が認定された場面。棄却ではなく一部認容の可否が問題になる\n4. 小問(2)：申立ての範囲を超えて原告に有利な事実が認定された場面。申立て超過判決の可否が問題になる\n5. 答案の締め方：「論ぜよ」への応答として「本件判決は妥当でない」と結論を書き、そのうえであるべき判決を示す\n\n数直線で整理すると、次のようになります。\n\n```\n債務額   0 ────100────130────────200────────300（万円）\n                     ↑甲の自認   \n請求   ：130超〜300 ＝ 170万円の不存在確認\n小問(1)：残額200 → 不存在は200超〜300 ＝100万円（請求の内側）\n小問(2)：残額100 → 不存在は100超〜300 ＝200万円（請求の外側に30万円はみ出す）\n```\n\n## 2. 参考答案の骨格\n\n**1. 小問(1)**\n\n- (1) 訴訟物の特定\n    - 処分権主義により、訴訟物の特定は原告の責任であり権限でもある\n    - 原告がどの範囲・内容の判断を求めているかで訴訟物をとらえる\n    - 300万円から自認額130万円を引いた、170万円の債務不存在確認が訴訟物となる\n    - [[TimeBase/20_Study/2.民訴法/246条|第246条]]（判決事項）\n- (2)ア 問題提起\n    "
+        },
+        {
+          "title": "Claude先生",
+          "content": ""
+        },
+        {
+          "title": "補足",
+          "content": ""
+        }
+      ]
+    }
+  ],
+  "today_schedule": [
+    {
+      "time": "05:45",
+      "activity": "家起床"
+    },
+    {
+      "time": "06:00",
+      "activity": "家食事"
+    },
+    {
+      "time": "06:45",
+      "activity": "家学習"
+    },
+    {
+      "time": "08:30",
+      "activity": "外note・YouTube"
+    },
+    {
+      "time": "09:15",
+      "activity": "家学習"
+    },
+    {
+      "time": "10:45",
+      "activity": "家運動"
+    },
+    {
+      "time": "11:00",
+      "activity": "家学習"
+    },
+    {
+      "time": "11:45",
+      "activity": "家運動"
+    },
+    {
+      "time": "12:00",
+      "activity": "家食事"
+    },
+    {
+      "time": "13:00",
+      "activity": "家掃除"
+    },
+    {
+      "time": "14:00",
+      "activity": "移動運動"
+    },
+    {
+      "time": "15:00",
+      "activity": "家復習"
+    },
+    {
+      "time": "16:00",
+      "activity": "家運動"
+    },
+    {
+      "time": "16:30",
+      "activity": "移動運動"
+    },
+    {
+      "time": "17:30",
+      "activity": "家支度・準備"
+    },
+    {
+      "time": "18:00",
+      "activity": "家食事準備"
+    },
+    {
+      "time": "18:30",
+      "activity": "家食事"
+    },
+    {
+      "time": "19:30",
+      "activity": "家復習"
+    },
+    {
+      "time": "20:30",
+      "activity": "家SNS"
+    },
+    {
+      "time": "21:00",
+      "activity": "家予定作成"
+    },
+    {
+      "time": "21:15",
+      "activity": "家就寝"
+    }
+  ],
+  "has_data": false,
+  "updated_at": "2026-09-26T21:35:29.064994",
+  "today_tasks": [
+    {
+      "subject": "憲法",
+      "status": "遅れ",
+      "action": "短答3問｜論点：違憲審査基準（LRA・比較衡量）・表現の自由・平等原則",
+      "theme": "短答2周目開始・論文構成（骨組みのみ）",
+      "situation": "今週0/10問。あと10問（12日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    },
+    {
+      "subject": "民法",
+      "status": "遅れ",
+      "action": "短答3問｜論点：物権変動（対抗要件・善意取得）・抵当権の効力範囲",
+      "theme": "短答2周目・頻出論点の論文骨組み",
+      "situation": "今週0/10問。あと10問（11日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    },
+    {
+      "subject": "刑法",
+      "status": "遅れ",
+      "action": "短答3問｜論点：構成要件該当性・違法性阻却（正当防衛の要件）・共犯の成立",
+      "theme": "短答2周目・論文構成入門",
+      "situation": "今週0/10問。あと10問（17日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    },
+    {
+      "subject": "行政法",
+      "status": "遅れ",
+      "action": "短答3問｜論点：取消訴訟の訴訟要件（処分性・原告適格・出訴期間）",
+      "theme": "短答2周目・条文ベース定着",
+      "situation": "今週0/10問。あと10問（9日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    },
+    {
+      "subject": "刑事訴訟法",
+      "status": "遅れ",
+      "action": "短答3問｜論点：捜査の端緒・逮捕の種類と要件・接見交通権",
+      "theme": "短答2周目",
+      "situation": "今週0/10問。あと10問（14日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    },
+    {
+      "subject": "実務基礎",
+      "status": "遅れ",
+      "action": "短答3問｜論点：貸金請求の要件事実・否認と抗弁の区別",
+      "theme": "民事・刑事実務の短答練習",
+      "situation": "今週0/10問。あと10問（95日ぶり）",
+      "actual_q": 0,
+      "target_q": 10,
+      "checked": false
+    }
+  ],
+  "quiz_question": "",
+  "quiz_answer_hint": "",
+  "articles": [],
+  "freq_rating": "",
+  "weak_points_text": "",
+  "next_focus": "",
+  "persistent_weak": [
+    {
+      "keyword": "処分性",
+      "count": 3,
+      "subject": "行政法"
+    },
+    {
+      "keyword": "処分権主義",
+      "count": 3,
+      "subject": "民訴法"
+    },
+    {
+      "keyword": "判断過程審査",
+      "count": 3,
+      "subject": "行政法"
+    },
+    {
+      "keyword": "同時履行の抗弁",
+      "count": 3,
+      "subject": "民訴法"
+    },
+    {
+      "keyword": "立証責任",
+      "count": 3,
+      "subject": "民法"
+    }
+  ],
+  "today_review_items": [],
+  "today_study_guide": "",
+  "news_feed": [
+    {
+      "title": "予備試験学習サイトを（とりあえず）HTML1枚で自作してみた話",
+      "label": "「受験生・記事ピック」 予備試験学習サイトを（とりあえず）HTML1枚で自作してみた話",
+      "url": "https://qiita.com/inuinu_wanwan/items/34b7bef8d615dc68c161",
+      "source": "Qiita｜「司法試験」タグの新着",
+      "category": "creator"
+    },
+    {
+      "title": "【予備試験対策】 2027年合格目標 『CBTコンプリート論文答練』 9月開講! 本答練を含む答練パックは今なら30%OFF!",
+      "label": "「予備校・イベント・教材」 【予備試験対策】 2027年合格目標 『CBTコンプリート論文答練』 9月開講! 本答練を含む答練パックは今なら30%OFF!",
+      "url": "https://www.itojuku.co.jp/shiken/shihou/kouza/26A34021.html",
+      "source": "伊藤塾｜更新情報（司法試験・予備試験コース）",
+      "category": "prep"
+    },
+    {
+      "title": "【予備試験対策】 NEW 『3ステップ論文速習講座』 「論文の書き方がわからない⇒手が出ない」からはこれで脱却!",
+      "label": "「予備校ニュース」 【予備試験対策】 NEW 『3ステップ論文速習講座』 「論文の書き方がわからない⇒手が出ない」からはこれで脱却!",
+      "url": "https://www.itojuku.co.jp/shiken/shihou/kouza/26A11054.html",
+      "source": "伊藤塾｜更新情報（司法試験・予備試験コース）",
+      "category": "prep"
+    },
+    {
+      "title": "【予備試験対策】 『予備試験受験生のための要件事実講義/事実認定講義』 論文・口述対策にもイチオシ!",
+      "label": "「予備校・イベント・教材」 【予備試験対策】 『予備試験受験生のための要件事実講義/事実認定講義』 論文・口述対策にもイチオシ!",
+      "url": "https://www.itojuku.co.jp/shiken/shihou/kouza/25A33003_0.html",
+      "source": "伊藤塾｜更新情報（司法試験・予備試験コース）",
+      "category": "prep"
+    },
+    {
+      "title": "【予備試験論文受験生の方へ】 『論文受験生サポートプログラム』 エントリー受付中!《口述再現集他、受験生必須の対策を進呈します!》",
+      "label": "「予備校・イベント・教材」 【予備試験論文受験生の方へ】 『論文受験生サポートプログラム』 エントリー受付中!《口述再現集他、受験生必須の対策を進呈します!》",
+      "url": "https://www.itojuku.co.jp/shiken/shihou/kouza/yobi/yobironbun_shougaku.html",
+      "source": "伊藤塾｜更新情報（司法試験・予備試験コース）",
+      "category": "prep"
+    },
+    {
+      "title": "司法試験合格〜司法修習",
+      "label": "「予備校ニュース」 司法試験合格〜司法修習",
+      "url": "https://www.itojuku.co.jp/shiken/shihou/about/syuusyuu/index.html",
+      "source": "伊藤塾｜更新情報（司法試験・予備試験コース）",
+      "category": "prep"
+    },
+    {
+      "title": "法科大学院を中核とする新しい法曹養成制度の充実・発展に向けた取組（法科大学院センター）",
+      "label": "「業界トピック」 法科大学院を中核とする新しい法曹養成制度の充実・発展に向けた取組（法科大学院センター）",
+      "url": "https://www.nichibenren.or.jp/activity/training/law_schools.html",
+      "source": "日弁連｜活動・トピックス",
+      "category": "media"
+    },
+    {
+      "title": "司法試験予備試験に関するＱ＆Ａ",
+      "label": "「まず疑問の整理」 司法試験予備試験に関するＱ＆Ａ",
+      "url": "https://www.moj.go.jp/jinji/shihoushiken/jinji07_00210.html",
+      "source": "法務省｜司法試験・予備試験",
+      "category": "official"
+    },
+    {
+      "title": "司法試験予備試験の実施について",
+      "label": "「日程・要項の骨格」 司法試験予備試験の実施について",
+      "url": "https://www.moj.go.jp/jinji/shihoushiken/jinji07_00026.html",
+      "source": "法務省｜司法試験・予備試験",
+      "category": "official"
+    },
+    {
+      "title": "司法試験予備試験の結果について",
+      "label": "「結果・合格情報」 司法試験予備試験の結果について",
+      "url": "https://www.moj.go.jp/jinji/shihoushiken/jinji07_00027.html",
+      "source": "法務省｜司法試験・予備試験",
+      "category": "official"
+    }
+  ]
+}
