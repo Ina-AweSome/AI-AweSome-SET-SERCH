@@ -411,6 +411,8 @@ body.reading{overflow:hidden}
 .sm-one{font-size:16.5px;font-weight:500;margin:4px 0 1px 34px}
 .sm-one em{font-style:normal;background:linear-gradient(transparent 60%,rgba(46,115,85,.25) 60%)}
 .sm-src{font-size:12.5px;color:var(--muted);margin-left:34px}
+.sm a.egov{color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(37,99,235,.45)}
+.sm a.egov:hover{color:#2563eb;text-decoration-color:#2563eb}
 .sm-warn{background:var(--flagbg);border-left:4px solid var(--differ);border-radius:4px;padding:8px 12px;margin:8px 0 0 34px;font-size:14px;line-height:1.7}
 .sm details{margin:8px 0 4px 34px}
 .sm summary{cursor:pointer;font-size:13.5px;color:var(--ai);list-style:none;min-height:30px;display:flex;align-items:center}
@@ -1615,6 +1617,79 @@ async function loadDay(day){
 }
 
 
+/* ---- 条文 → e-Gov 法令検索 ----
+   「頭に入る版」の 条文：／要件表など、条番号の引用を検索結果へリンクする。
+   個別条文ページではなく search?keyword=…（本人希望 2026-09-27）。 */
+const EGOV_LAW_NAMES = [
+  '行政事件訴訟法','行政不服審査法','行政手続法','国家賠償法','国家公務員法',
+  '公職選挙法','民事訴訟法','刑事訴訟法','民事執行法','不動産登記法',
+  '会社法施行規則','民事訴訟規則','会社法','手形法','小切手法','破産法','裁判所法',
+  '民法','商法','刑法','憲法','会計法',
+  '行訴法','公選法','国公法','民訴規則','民訴法','刑訴法','民執法','施行規則','民訴','刑訴'
+];
+const EGOV_LAW_CANON = {
+  '行政事件訴訟法':'行政事件訴訟法','行訴法':'行政事件訴訟法',
+  '行政不服審査法':'行政不服審査法','行政手続法':'行政手続法',
+  '国家賠償法':'国家賠償法','国家公務員法':'国家公務員法','国公法':'国家公務員法',
+  '公職選挙法':'公職選挙法','公選法':'公職選挙法',
+  '民事訴訟法':'民事訴訟法','民訴法':'民事訴訟法','民訴':'民事訴訟法',
+  '刑事訴訟法':'刑事訴訟法','刑訴法':'刑事訴訟法','刑訴':'刑事訴訟法',
+  '民事執行法':'民事執行法','民執法':'民事執行法',
+  '民事訴訟規則':'民事訴訟規則','民訴規則':'民事訴訟規則',
+  '不動産登記法':'不動産登記法','会社法施行規則':'会社法施行規則','施行規則':'会社法施行規則',
+  '会社法':'会社法','手形法':'手形法','小切手法':'小切手法','破産法':'破産法',
+  '裁判所法':'裁判所法','民法':'民法','商法':'商法','刑法':'刑法','憲法':'憲法','会計法':'会計法'
+};
+const EGOV_SUBJ_LAW = {
+  '商法':'会社法','民法':'民法','刑法':'刑法','憲法':'憲法',
+  '民訴法':'民事訴訟法','民事訴訟法':'民事訴訟法',
+  '刑訴法':'刑事訴訟法','刑事訴訟法':'刑事訴訟法',
+  '行政法':'行政事件訴訟法'
+};
+const EGOV_ART_RE = new RegExp(
+  '(?:(' + EGOV_LAW_NAMES.join('|') + ')\\s*)?' +
+  '第?(\\d{1,4})条(?:の\\d{1,2})?' +
+  '(?:' +
+    '(?:第?\\d{1,2}項|[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+|第?\\d{1,2}号)+' +
+    '(?:・(?:第?\\d{1,2}項|[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+|第?\\d{1,2}号)+)*' +
+  ')?',
+  'g'
+);
+function egovSearchHref(q){
+  return 'https://laws.e-gov.go.jp/search?keyword=' + encodeURIComponent(q);
+}
+function egovDefaultLaw(q){
+  const sub = (q && q.subject) || (CUR && CUR.subject) || '';
+  if (EGOV_SUBJ_LAW[sub]) return EGOV_SUBJ_LAW[sub];
+  const hit = Object.keys(EGOV_SUBJ_LAW).sort((a,b)=>b.length-a.length).find(k => sub.includes(k));
+  return hit ? EGOV_SUBJ_LAW[hit] : '';
+}
+/* 条番号の連続をリンク化。法令名のない条は直前の法令名（なければ科目の既定）を引き継ぐ。
+   「（主体は発起人のみ）」のような条番号でない括弧書きはそのまま。 */
+function linkifyArts(text, q){
+  if (!text) return '';
+  const s = String(text);
+  let lastLaw = egovDefaultLaw(q);
+  let out = '', i = 0;
+  for (const m of s.matchAll(EGOV_ART_RE)) {
+    out += esc(s.slice(i, m.index));
+    const rawLaw = m[1] || '';
+    const full = m[0];
+    if (rawLaw) lastLaw = EGOV_LAW_CANON[rawLaw] || rawLaw;
+    const artPart = full.slice(rawLaw.length).replace(/^\s+/, '');
+    if (lastLaw) {
+      const kw = lastLaw + artPart.replace(/^第/, '');
+      out += '<a class="egov" href="' + egovSearchHref(kw) + '" target="_blank" rel="noopener">'
+          + esc(full) + '</a>';
+    } else {
+      out += esc(full);
+    }
+    i = m.index + full.length;
+  }
+  out += esc(s.slice(i));
+  return out;
+}
+
 /* ---- 冒頭の「頭に入る版」 ----
    qsummary.py が6社の解説から作った要約（q.sum）を最初に見せる。
    ○×の一致・割れは要約に頼らず各社の choices から数える。
@@ -1695,7 +1770,7 @@ function sumBlock(q){
         + '<span class="sm-ox ' + (ox === '×' ? 'x' : 'o') + '">' + esc(ox) + '</span>'
         + (L.look ? '<span class="sm-look">' + esc(L.look) + '</span>' : '') + chip + '</div>'
         + '<p class="sm-one">' + em(L.one) + '</p>'
-        + (L.src ? '<div class="sm-src">' + esc(L.src) + '</div>' : '')
+        + (L.src ? '<div class="sm-src">' + linkifyArts(L.src, q) + '</div>' : '')
         + (L.warn ? '<div class="sm-warn">⚠ ' + esc(L.warn) + '</div>' : '')
         + (who.length ? '<details><summary>各社の解説（' + who.length + '社）</summary>'
           + tabs(gid, who.map(a => [a, esc(a) + (wrong(a) ? '<span class="x">×</span>' : '')]), on)
@@ -1713,7 +1788,7 @@ function sumBlock(q){
       + (F.rule ? '<p class="sm-one"><span class="sm-tg">規範</span>' + em(F.rule) + '</p>' : '')
       + ((F.facts || []).length ? '<div class="sm-fx"><span class="sm-tg">使う事実</span>' + F.facts.map(x => '<span class="sm-look">' + esc(x) + '</span>').join('') + '</div>' : '')
       + (F.concl ? '<p class="sm-cc"><span class="sm-tg">結論</span>' + esc(F.concl) + '</p>' : '')
-      + (F.src ? '<div class="sm-src">' + esc(F.src) + '</div>' : '')
+      + (F.src ? '<div class="sm-src">' + linkifyArts(F.src, q) + '</div>' : '')
       + (F.warn ? '<div class="sm-warn">⚠ ' + esc(F.warn) + '</div>' : '')
       + '</div>').join('')
       + (rc.length ? '<details><summary>各社の規範カード（' + rc.length + '社）</summary>'
@@ -1726,7 +1801,7 @@ function sumBlock(q){
   /* 5 要件表 */
   if ((S.reqs || []).length)
     h += '<h4>⑤ 条文ごとの要件</h4><table><thead><tr><th>条文</th><th>' + (RB ? '何の場面か' : '何の書面・場面か') + '</th><th>要件</th></tr></thead><tbody>'
-      + S.reqs.map(r => '<tr><td>' + esc(r[0] || '') + '</td><td>' + esc(r[1] || '') + '</td><td>' + esc(r[2] || '') + '</td></tr>').join('')
+      + S.reqs.map(r => '<tr><td>' + linkifyArts(r[0] || '', q) + '</td><td>' + esc(r[1] || '') + '</td><td>' + esc(r[2] || '') + '</td></tr>').join('')
       + '</tbody></table>';
   /* 6 次回 */
   if ((S.must || []).length)
