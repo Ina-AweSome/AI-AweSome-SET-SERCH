@@ -1669,10 +1669,15 @@ function egovDefaultLaw(q){
 function linkifyArts(text, q){
   if (!text) return '';
   const s = String(text);
-  let lastLaw = egovDefaultLaw(q);
+  const defLaw = egovDefaultLaw(q);
+  let lastLaw = defLaw;
   let out = '', i = 0;
   for (const m of s.matchAll(EGOV_ART_RE)) {
-    out += esc(s.slice(i, m.index));
+    const gap = s.slice(i, m.index);
+    /* ／・。で文が切れたら法令名の引き継ぎを科目既定に戻す
+       （例: 裁判所法33条Ⅰ／15条 → 15条は民訴法） */
+    if (/[／。]/.test(gap)) lastLaw = defLaw;
+    out += esc(gap);
     const rawLaw = m[1] || '';
     const full = m[0];
     if (rawLaw) lastLaw = EGOV_LAW_CANON[rawLaw] || rawLaw;
