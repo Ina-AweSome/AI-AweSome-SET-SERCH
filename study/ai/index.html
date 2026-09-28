@@ -434,17 +434,16 @@ body.artopen #artpanel{display:flex;transform:translateX(0);opacity:1}
   margin:18px 0 6px;font-weight:700}
 .ap-body h5:first-child{margin-top:0}
 .ap-ul{list-style:none;margin:0;padding:0}
-.ap-ul li{position:relative;padding:5px 0 5px 14px;font-size:14.5px;line-height:1.7;
-  color:var(--ink);word-break:break-word;border-bottom:1px solid rgba(0,0,0,.05)}
-.ap-ul li:last-child{border-bottom:0}
-.ap-ul li::before{content:"";position:absolute;left:0;top:.85em;width:5px;height:5px;
+.ap-ul li{position:relative;padding:6px 0 6px 14px;font-size:14.5px;line-height:1.65;
+  color:var(--ink);word-break:break-word}
+.ap-ul li + li{border-top:1px solid rgba(0,0,0,.06)}
+.ap-ul li::before{content:"";position:absolute;left:0;top:.9em;width:5px;height:5px;
   border-radius:50%;background:var(--ai);opacity:.85}
-.ap-ul .wh{display:inline;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em;margin-right:.4em}
-.ap-ul .wh::after{content:""}
+.ap-ul .wh{display:inline;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em;margin-right:.45em}
 .ap-ul .tx{display:inline}
 .ap-ul .tx em{font-style:normal;background:linear-gradient(transparent 60%,rgba(46,115,85,.25) 60%)}
-.ap-ul.ap-soft li{font-size:13.5px;line-height:1.6;color:var(--ink);opacity:.92}
-.ap-ul.ap-soft li::before{background:var(--muted);opacity:.55;width:4px;height:4px}
+.ap-ul.ap-soft li{font-size:13px;line-height:1.55;color:var(--ink)}
+.ap-ul.ap-soft li::before{background:var(--muted);opacity:.5;width:4px;height:4px;top:.95em}
 .ap-empty{font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 12px}
 .ap-foot{padding:12px 14px 16px;border-top:1px solid var(--line);background:var(--paper);
   display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -2468,6 +2467,7 @@ function artWhereLabel(where){
   return String(where || '')
     .replace(/・要点$|・条文$|・見る所$|・注意$|・注$|・規範$|・結論$|・事実$/, '')
     .replace(/・条文タグ$/, '')
+    .replace(/・(\d+)[\s　]*([^・\d]*)$/, '・$1')  /* Claude・④ 条文 → Claude・④ */
     .replace(/^⑥ 必ず書く一文$/, '⑥')
     .replace(/^④ 取り違え$/, '④')
     .replace(/^⑤ 要件$/, '⑤')
@@ -2489,7 +2489,7 @@ function artPushHit(out, where, text, needle, wantLaw, tier){
   if (artIsBareCite(raw, needle, wantLaw)) return;
   const snip = raw.length > 160 ? raw.slice(0, 160) + '…' : raw;
   const key = artNormKey(snip);
-  /* 同一・包含の冗長行は長い方を残す */
+  /* 同一・包含の冗長行は長い方を残す（要点優先） */
   for (let i = 0; i < out.length; i++) {
     const o = out[i];
     const ok = artNormKey(o.text);
@@ -2573,8 +2573,10 @@ function artRenderBullets(items, soft){
   if (!items || !items.length) return '';
   return '<ul class="ap-ul' + (soft ? ' ap-soft' : '') + '">' + items.map(x => {
     const wh = artWhereLabel(x.where);
+    let tx = x.text;
+    if (soft && tx.length > 88) tx = tx.slice(0, 88) + '…';
     return '<li>' + (wh ? '<span class="wh">' + esc(wh) + '</span>' : '')
-      + '<span class="tx">' + esc(x.text).replace(/【(.+?)】/g, '<em>$1</em>') + '</span></li>';
+      + '<span class="tx">' + esc(tx).replace(/【(.+?)】/g, '<em>$1</em>') + '</span></li>';
   }).join('') + '</ul>';
 }
 function artPanelEl(){
