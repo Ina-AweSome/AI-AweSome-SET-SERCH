@@ -2426,60 +2426,70 @@ function artTextHas(text, needle){
   }
   return false;
 }
-function artPushHit(out, where, text, needle){
+function artPushHit(out, where, text, needle, wantLaw){
   const raw = String(text || '').trim();
   if (!raw || !artTextHas(raw, needle)) return;
+  /* 法令名付き引用のとき、別法令＋同番号（手形法42条 vs 会社法42条）は落とす */
+  if (wantLaw) {
+    const re = new RegExp('([一-龯ァ-ヶーA-Za-z]{1,24})\\s*' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const m = raw.match(re);
+    if (m) {
+      const other = EGOV_LAW_CANON[m[1]] || m[1];
+      if (other && other !== wantLaw && EGOV_LAW_IDS[other]) return;
+    }
+  }
   if (out.some(h => h.text === raw && h.where === where)) return;
   out.push({ where, text: raw });
 }
 function collectArtMentions(q, cite){
   const needle = artNeedle(cite);
+  const wantLaw = artLawLabel(cite).law || '';
   const out = [];
   if (!needle || !q) return out;
   const S = q.sum || null;
   if (S) {
-    artPushHit(out, 'テーマ', S.theme, needle);
-    artPushHit(out, '正解メモ', S.answer_note, needle);
-    artPushHit(out, '次に迷ったら', S.next, needle);
+    artPushHit(out, 'テーマ', S.theme, needle, wantLaw);
+    artPushHit(out, '正解メモ', S.answer_note, needle, wantLaw);
+    artPushHit(out, '次に迷ったら', S.next, needle, wantLaw);
     const ax = S.axis || {};
-    artPushHit(out, '① 軸', ax.lead, needle);
-    artPushHit(out, '① 軸・注', ax.note, needle);
+    artPushHit(out, '① 軸', ax.lead, needle, wantLaw);
+    artPushHit(out, '① 軸・注', ax.note, needle, wantLaw);
     (ax.boxes || []).forEach(b => {
-      artPushHit(out, '① 軸', b.q, needle);
+      artPushHit(out, '① 軸', b.q, needle, wantLaw);
       (b.rows || []).forEach(r => {
-        artPushHit(out, '① 軸', ((r[0] || '') + ' ' + (r[1] || '')).trim(), needle);
+        artPushHit(out, '① 軸', ((r[0] || '') + ' ' + (r[1] || '')).trim(), needle, wantLaw);
       });
     });
     (S.legs || []).forEach(L => {
       const lab = '③ 肢' + (L.l || '');
-      artPushHit(out, lab + '・見る所', L.look, needle);
-      artPushHit(out, lab + '・要点', L.one, needle);
-      artPushHit(out, lab + '・条文', L.src, needle);
-      artPushHit(out, lab + '・注意', L.warn, needle);
+      artPushHit(out, lab + '・見る所', L.look, needle, wantLaw);
+      artPushHit(out, lab + '・要点', L.one, needle, wantLaw);
+      artPushHit(out, lab + '・条文', L.src, needle, wantLaw);
+      artPushHit(out, lab + '・注意', L.warn, needle, wantLaw);
     });
     (S.flow || []).forEach(F => {
       const lab = '③ ' + (F.n || '論点');
-      artPushHit(out, lab + '・規範', F.rule, needle);
-      artPushHit(out, lab + '・結論', F.concl, needle);
-      artPushHit(out, lab + '・条文', F.src, needle);
-      artPushHit(out, lab + '・注意', F.warn, needle);
-      (F.facts || []).forEach(x => artPushHit(out, lab + '・事実', x, needle));
+      artPushHit(out, lab + '・規範', F.rule, needle, wantLaw);
+      artPushHit(out, lab + '・結論', F.concl, needle, wantLaw);
+      artPushHit(out, lab + '・条文', F.src, needle, wantLaw);
+      artPushHit(out, lab + '・注意', F.warn, needle, wantLaw);
+      (F.facts || []).forEach(x => artPushHit(out, lab + '・事実', x, needle, wantLaw));
     });
     (S.traps || []).forEach(t => {
-      artPushHit(out, '④ 取り違え', (t[0] || ''), needle);
-      artPushHit(out, '④ 取り違え', ((t[0] || '') + '：' + (t[1] || '')).trim(), needle);
+      artPushHit(out, '④ 取り違え', (t[0] || ''), needle, wantLaw);
+      artPushHit(out, '④ 取り違え', ((t[0] || '') + '：' + (t[1] || '')).trim(), needle, wantLaw);
     });
     (S.reqs || []).forEach(r => {
       const row = [r[0], r[1], r[2]].filter(Boolean).join('／');
-      artPushHit(out, '⑤ 要件', row, needle);
+      artPushHit(out, '⑤ 要件', row, needle, wantLaw);
     });
-    (S.must || []).forEach(x => artPushHit(out, '⑥ 必ず書く一文', x, needle));
+    (S.must || []).forEach(x => artPushHit(out, '⑥ 必ず書く一文', x, needle, wantLaw));
   }
   const A = typeof ais === 'function' ? ais(q) : Object.keys(q.ai || {});
   A.forEach(a => {
     const ai = q.ai[a] || {};
     (ai.arts || ai.articles || []).forEach(k => {
-      if (artTextHas(k, needle)) artPushHit(out, a + '・条文タグ', k, needle);
+      if (artTextHas(k, needle)) artPushHit(out, a + '・条文タグ', k, needle, wantLaw);
     });
     Object.entries(ai.sections || {}).forEach(([sec, body]) => {
       if (!body || !artTextHas(body, needle)) return;
@@ -2487,7 +2497,7 @@ function collectArtMentions(q, cite){
       const hitLines = lines.filter(ln => artTextHas(ln, needle)).slice(0, 2);
       hitLines.forEach(ln => {
         const snip = ln.length > 180 ? ln.slice(0, 180) + '…' : ln;
-        artPushHit(out, a + '・' + sec, snip, needle);
+        artPushHit(out, a + '・' + sec, snip, needle, wantLaw);
       });
     });
   });
