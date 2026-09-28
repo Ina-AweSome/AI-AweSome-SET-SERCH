@@ -1493,6 +1493,18 @@ function showNote(key, title, body, el){
 
 let artKey = '';
 function showArt(k, el){
+  /* 条文は要点パネルへ統一。ここは判例・論点語など非条文チップ用 */
+  const eg = egovCiteHref(k);
+  if (eg && artNo(k)) {
+    document.querySelectorAll('.artwrap').forEach(x => x.remove());
+    artKey = '';
+    if (document.body.classList.contains('artopen') && ART_PANEL_CITE === k) {
+      closeArtPanel();
+      return;
+    }
+    openArtPanel(k, eg);
+    return;
+  }
   const a = ARTS[k], p = PAST[k];
   /* パネルは「押したチップのすぐ下」に出す。ページ末尾の #artbox に描くと
      チップから数千px下になり、押しても何も起きていないように見えた（2026-09-14）。 */
@@ -1501,6 +1513,7 @@ function showArt(k, el){
   if (fallback) fallback.innerHTML = '';
   if (artKey === k){ artKey = ''; return; }      // もう一度押すと閉じる
   artKey = k;
+  closeArtPanel();
   const box = document.createElement('div');
   box.className = 'artwrap';
 
@@ -1515,7 +1528,6 @@ function showArt(k, el){
   if (!a) refs.push('<button data-cur="1">📋 Cursor への指示</button>');
   refs.push('<a href="https://www.google.com/search?q=' + encodeURIComponent(k + ' 判例 要件')
     + '" target="_blank" rel="noopener">🔎 Web で調べる</a>');
-  const eg = egovCiteHref(k);
   if (eg) refs.push('<a href="' + eg + '" target="_blank" rel="noopener">📜 e-Govで検索</a>');
 
   const g = gistFor(k) || localGist(k), ft = impTitle(k);
@@ -1872,7 +1884,7 @@ function kwArtChip(k, cls, tip, extra){
 function wireKwArtClicks(root){
   (root || document).querySelectorAll('.kw[data-k]').forEach(b => {
     b.onclick = e => {
-      /* 通常クリック＝パネル。Ctrl/⌘/中クリックは e-Gov 検索をそのまま開く */
+      /* 通常クリック＝要点パネル（条文）／旧カードは出さない。修飾キーは e-Gov 直開 */
       if (b.tagName === 'A' && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1)) return;
       if (b.tagName === 'A') e.preventDefault();
       showArt(b.dataset.k, b);
@@ -2403,9 +2415,11 @@ window.addEventListener('hashchange', () => {
   const u = fromHash(), sec = hashSec(); if (u) Promise.resolve(show(u)).then(() => scrollToSec(sec));
 });
 
-/* ---- 条文引用クリック → 要約パネル（Option A） ----
-   a.egov の通常クリックはアプリ内パネル。Ctrl/⌘/Shift/Alt・中クリックは e-Gov をそのまま。
-   要約は q.sum（頭に入る版）と AI チップ／本文の既存言及のみ。新規の法解釈は作らない。 */
+/* ---- 条文引用クリック → 要点パネル ----
+   a.egov（本文）も .kw[data-k] 条文チップも同じ要点パネル。
+   Ctrl/⌘/Shift/Alt・中クリックは e-Gov をそのまま。
+   要約は q.sum（頭に入る版）と AI 本文の既存言及のみ。新規の法解釈は作らない。
+   旧「この問題での言及」＋.ap-hit カード／チップ直下 .artwrap は使わない。 */
 let ART_PANEL_CITE = '';
 function artNeedle(cite){
   const s = egovNormCite(String(cite || ''));
@@ -2612,6 +2626,9 @@ function openArtPanel(cite, href){
   const { law, label } = artLawLabel(cite);
   const hits = collectArtMentions(q, cite);
   const pan = artPanelEl();
+  /* チップ由来の旧 .artwrap カードが残ると要点パネルと二重表示になるので消す */
+  document.querySelectorAll('.artwrap').forEach(x => x.remove());
+  artKey = '';
   ART_PANEL_CITE = cite;
   document.getElementById('ap-title').textContent = label || cite;
   document.getElementById('ap-sub').textContent = (q
