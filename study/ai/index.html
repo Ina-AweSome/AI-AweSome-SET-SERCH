@@ -431,13 +431,20 @@ body.artopen #artpanel{display:flex;transform:translateX(0);opacity:1}
 .ap-x:hover{border-color:var(--ai);color:var(--ai)}
 .ap-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 28px}
 .ap-body h5{font-family:var(--disp);font-size:13px;letter-spacing:.06em;color:var(--muted);
-  margin:16px 0 8px;font-weight:700}
+  margin:18px 0 6px;font-weight:700}
 .ap-body h5:first-child{margin-top:0}
-.ap-hit{padding:10px 12px;background:var(--sunk);border-radius:5px;margin:0 0 8px;
-  border-left:3px solid var(--ai)}
-.ap-hit .wh{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;font-weight:700;letter-spacing:.04em}
-.ap-hit .tx{font-size:14.5px;line-height:1.75;color:var(--ink);white-space:pre-wrap;word-break:break-word}
-.ap-hit .tx em{font-style:normal;background:linear-gradient(transparent 60%,rgba(46,115,85,.25) 60%)}
+.ap-ul{list-style:none;margin:0;padding:0}
+.ap-ul li{position:relative;padding:5px 0 5px 14px;font-size:14.5px;line-height:1.7;
+  color:var(--ink);word-break:break-word;border-bottom:1px solid rgba(0,0,0,.05)}
+.ap-ul li:last-child{border-bottom:0}
+.ap-ul li::before{content:"";position:absolute;left:0;top:.85em;width:5px;height:5px;
+  border-radius:50%;background:var(--ai);opacity:.85}
+.ap-ul .wh{display:inline;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em;margin-right:.4em}
+.ap-ul .wh::after{content:""}
+.ap-ul .tx{display:inline}
+.ap-ul .tx em{font-style:normal;background:linear-gradient(transparent 60%,rgba(46,115,85,.25) 60%)}
+.ap-ul.ap-soft li{font-size:13.5px;line-height:1.6;color:var(--ink);opacity:.92}
+.ap-ul.ap-soft li::before{background:var(--muted);opacity:.55;width:4px;height:4px}
 .ap-empty{font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 12px}
 .ap-foot{padding:12px 14px 16px;border-top:1px solid var(--line);background:var(--paper);
   display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -2426,8 +2433,49 @@ function artTextHas(text, needle){
   }
   return false;
 }
-function artPushHit(out, where, text, needle, wantLaw){
-  const raw = String(text || '').trim();
+function artCleanSnippet(text){
+  return String(text || '')
+    .replace(/^[\s|│┃─┌┐└┘├┤┬┴┼]+/, '')
+    .replace(/[\s|│┃─┌┐└┘├┤┬┴┼]+$/, '')
+    .replace(/^[-・●○◆◇▶▷\s]+/, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/^\*\*|\*\*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+/* 条文番号・法令名だけの行（タグ／「根拠：42条」等）は要点にならないので落とす */
+function artIsBareCite(text, needle, wantLaw){
+  let s = artCleanSnippet(text);
+  if (!s) return true;
+  s = s.replace(/\*\*/g, '').replace(/[【】\[\]()（）「」『』]/g, ' ');
+  const escN = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /* 既知の法令名だけ剥がす（直前の普通の語を法令名扱いしない） */
+  const laws = Object.keys(EGOV_LAW_IDS || {}).concat(Object.keys(EGOV_LAW_CANON || {}))
+    .filter(Boolean).sort((a, b) => b.length - a.length)
+    .map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const lawAlt = laws.length ? '(?:' + laws.join('|') + ')?' : '';
+  s = s.replace(new RegExp(lawAlt + '\\s*' + escN
+    + '(?:第?\\d+項|[ⅠⅡⅢⅣⅤ]+|第?\\d+号)*', 'g'), ' ');
+  s = s.replace(new RegExp(lawAlt + '\\s*\\d{1,4}条(?:の\\d{1,2})?(?:第?\\d+項|[ⅠⅡⅢⅣⅤ]+|第?\\d+号)*', 'g'), ' ');
+  s = s.replace(/(根拠|条文|参照|出典|関連|該当|上記|下記|など|等|および|及び|ならびに|並びに|と|・|／|\/|,|、|：|:|＝|=|-|—|–|\|)+/g, ' ');
+  s = s.replace(/\s+/g, '').trim();
+  return s.length < 2;
+}
+function artNormKey(text){
+  return artCleanSnippet(text).replace(/\*\*/g, '').replace(/\s+/g, '').toLowerCase();
+}
+function artWhereLabel(where){
+  return String(where || '')
+    .replace(/・要点$|・条文$|・見る所$|・注意$|・注$|・規範$|・結論$|・事実$/, '')
+    .replace(/・条文タグ$/, '')
+    .replace(/^⑥ 必ず書く一文$/, '⑥')
+    .replace(/^④ 取り違え$/, '④')
+    .replace(/^⑤ 要件$/, '⑤')
+    .replace(/^一言メモ.*/, '一言')
+    .trim();
+}
+function artPushHit(out, where, text, needle, wantLaw, tier){
+  const raw = artCleanSnippet(text);
   if (!raw || !artTextHas(raw, needle)) return;
   /* 法令名付き引用のとき、別法令＋同番号（手形法42条 vs 会社法42条）は落とす */
   if (wantLaw) {
@@ -2438,8 +2486,21 @@ function artPushHit(out, where, text, needle, wantLaw){
       if (other && other !== wantLaw && EGOV_LAW_IDS[other]) return;
     }
   }
-  if (out.some(h => h.text === raw && h.where === where)) return;
-  out.push({ where, text: raw });
+  if (artIsBareCite(raw, needle, wantLaw)) return;
+  const snip = raw.length > 160 ? raw.slice(0, 160) + '…' : raw;
+  const key = artNormKey(snip);
+  /* 同一・包含の冗長行は長い方を残す */
+  for (let i = 0; i < out.length; i++) {
+    const o = out[i];
+    const ok = artNormKey(o.text);
+    if (ok === key || ok.indexOf(key) !== -1 || key.indexOf(ok) !== -1) {
+      const preferNew = (tier === 'key' && o.tier !== 'key')
+        || (tier === o.tier && snip.length > o.text.length);
+      if (preferNew) out[i] = { where, text: snip, tier: tier || o.tier || 'more' };
+      return;
+    }
+  }
+  out.push({ where, text: snip, tier: tier || 'more' });
 }
 function collectArtMentions(q, cite){
   const needle = artNeedle(cite);
@@ -2448,60 +2509,73 @@ function collectArtMentions(q, cite){
   if (!needle || !q) return out;
   const S = q.sum || null;
   if (S) {
-    artPushHit(out, 'テーマ', S.theme, needle, wantLaw);
-    artPushHit(out, '正解メモ', S.answer_note, needle, wantLaw);
-    artPushHit(out, '次に迷ったら', S.next, needle, wantLaw);
+    /* 頭に入る版を要点優先で拾う（軸・肢・取り違え・要件） */
     const ax = S.axis || {};
-    artPushHit(out, '① 軸', ax.lead, needle, wantLaw);
-    artPushHit(out, '① 軸・注', ax.note, needle, wantLaw);
+    artPushHit(out, '① 軸', ax.lead, needle, wantLaw, 'key');
+    artPushHit(out, '① 軸', ax.note, needle, wantLaw, 'key');
     (ax.boxes || []).forEach(b => {
-      artPushHit(out, '① 軸', b.q, needle, wantLaw);
+      artPushHit(out, '① 軸', b.q, needle, wantLaw, 'key');
       (b.rows || []).forEach(r => {
-        artPushHit(out, '① 軸', ((r[0] || '') + ' ' + (r[1] || '')).trim(), needle, wantLaw);
+        artPushHit(out, '① 軸', ((r[0] || '') + ' ' + (r[1] || '')).trim(), needle, wantLaw, 'key');
       });
     });
     (S.legs || []).forEach(L => {
       const lab = '③ 肢' + (L.l || '');
-      artPushHit(out, lab + '・見る所', L.look, needle, wantLaw);
-      artPushHit(out, lab + '・要点', L.one, needle, wantLaw);
-      artPushHit(out, lab + '・条文', L.src, needle, wantLaw);
-      artPushHit(out, lab + '・注意', L.warn, needle, wantLaw);
+      const srcHit = artTextHas(L.src, needle) && !artIsBareCite(L.src || '', needle, wantLaw);
+      /* 肢の条文行がヒットしたら、番号が無い「要点」一文を優先 */
+      if (srcHit && L.one) {
+        const one = artCleanSnippet(L.one);
+        if (one) artPushHit(out, lab, artTextHas(one, needle) ? one : (one + '（' + needle + '）'), needle, wantLaw, 'key');
+        artPushHit(out, lab, L.src, needle, wantLaw, 'more');
+      } else {
+        artPushHit(out, lab, L.one, needle, wantLaw, 'key');
+        artPushHit(out, lab, L.src, needle, wantLaw, 'key');
+      }
+      artPushHit(out, lab, L.warn, needle, wantLaw, 'key');
+      artPushHit(out, lab, L.look, needle, wantLaw, 'more');
     });
     (S.flow || []).forEach(F => {
       const lab = '③ ' + (F.n || '論点');
-      artPushHit(out, lab + '・規範', F.rule, needle, wantLaw);
-      artPushHit(out, lab + '・結論', F.concl, needle, wantLaw);
-      artPushHit(out, lab + '・条文', F.src, needle, wantLaw);
-      artPushHit(out, lab + '・注意', F.warn, needle, wantLaw);
-      (F.facts || []).forEach(x => artPushHit(out, lab + '・事実', x, needle, wantLaw));
+      artPushHit(out, lab, F.concl, needle, wantLaw, 'key');
+      artPushHit(out, lab, F.rule, needle, wantLaw, 'key');
+      artPushHit(out, lab, F.src, needle, wantLaw, 'key');
+      artPushHit(out, lab, F.warn, needle, wantLaw, 'more');
+      (F.facts || []).forEach(x => artPushHit(out, lab, x, needle, wantLaw, 'more'));
     });
     (S.traps || []).forEach(t => {
-      artPushHit(out, '④ 取り違え', (t[0] || ''), needle, wantLaw);
-      artPushHit(out, '④ 取り違え', ((t[0] || '') + '：' + (t[1] || '')).trim(), needle, wantLaw);
+      artPushHit(out, '④ 取り違え', ((t[0] || '') + '：' + (t[1] || '')).trim(), needle, wantLaw, 'key');
+      artPushHit(out, '④ 取り違え', (t[0] || ''), needle, wantLaw, 'key');
     });
     (S.reqs || []).forEach(r => {
       const row = [r[0], r[1], r[2]].filter(Boolean).join('／');
-      artPushHit(out, '⑤ 要件', row, needle, wantLaw);
+      artPushHit(out, '⑤ 要件', row, needle, wantLaw, 'key');
     });
-    (S.must || []).forEach(x => artPushHit(out, '⑥ 必ず書く一文', x, needle, wantLaw));
+    (S.must || []).forEach(x => artPushHit(out, '⑥', x, needle, wantLaw, 'key'));
+    artPushHit(out, '正解メモ', S.answer_note, needle, wantLaw, 'more');
+    artPushHit(out, '次に', S.next, needle, wantLaw, 'more');
   }
   const A = typeof ais === 'function' ? ais(q) : Object.keys(q.ai || {});
   A.forEach(a => {
     const ai = q.ai[a] || {};
-    (ai.arts || ai.articles || []).forEach(k => {
-      if (artTextHas(k, needle)) artPushHit(out, a + '・条文タグ', k, needle, wantLaw);
-    });
+    /* 条文タグ単体はスキップ（bare cite）。本文の中身だけ拾う */
     Object.entries(ai.sections || {}).forEach(([sec, body]) => {
       if (!body || !artTextHas(body, needle)) return;
       const lines = String(body).split(/\n+/).map(x => x.trim()).filter(Boolean);
       const hitLines = lines.filter(ln => artTextHas(ln, needle)).slice(0, 2);
       hitLines.forEach(ln => {
-        const snip = ln.length > 180 ? ln.slice(0, 180) + '…' : ln;
-        artPushHit(out, a + '・' + sec, snip, needle, wantLaw);
+        artPushHit(out, a + '・' + sec, ln, needle, wantLaw, 'more');
       });
     });
   });
   return out;
+}
+function artRenderBullets(items, soft){
+  if (!items || !items.length) return '';
+  return '<ul class="ap-ul' + (soft ? ' ap-soft' : '') + '">' + items.map(x => {
+    const wh = artWhereLabel(x.where);
+    return '<li>' + (wh ? '<span class="wh">' + esc(wh) + '</span>' : '')
+      + '<span class="tx">' + esc(x.text).replace(/【(.+?)】/g, '<em>$1</em>') + '</span></li>';
+  }).join('') + '</ul>';
 }
 function artPanelEl(){
   let ov = document.getElementById('artov');
@@ -2545,20 +2619,31 @@ function openArtPanel(cite, href){
   eg.textContent = 'e-Govで全文';
   const body = document.getElementById('ap-body');
   let h = '';
-  if (hits.length) {
-    h += '<h5>この問題での言及</h5>' + hits.map(x =>
-      '<div class="ap-hit"><span class="wh">' + esc(x.where) + '</span>'
-      + '<div class="tx">' + esc(x.text).replace(/【(.+?)】/g, '<em>$1</em>') + '</div></div>'
-    ).join('');
-  } else {
-    h += '<p class="ap-empty">この問題の「頭に入る版」や AI 解説から、この条文への短い言及は見つかりませんでした。'
+  const g = (typeof gistFor === 'function' ? gistFor(cite) : null) || (typeof localGist === 'function' ? localGist(cite) : null);
+  const gistHit = (g && g.t && !artIsBareCite(g.t, artNeedle(cite), law))
+    ? [{ where: '一言', text: artCleanSnippet(g.t), tier: 'key' }]
+    : [];
+  const key = gistHit.concat(hits.filter(x => x.tier === 'key')).slice(0, 2);
+  const keyNorm = new Set(key.map(x => artNormKey(x.text)));
+  const moreRank = (x) => {
+    let sc = Math.min(x.text.length, 120);
+    if (/解任|選任|できる|できない|とは|趣旨|要件|成立|無効|原則/.test(x.text)) sc += 40;
+    if (/迷い|誤答|分類|根拠/.test(x.text) || /迷い|誤答|図解/.test(x.where || '')) sc -= 50;
+    return sc;
+  };
+  const more = hits.filter(x => x.tier !== 'key' && !keyNorm.has(artNormKey(x.text)))
+    .sort((a, b) => moreRank(b) - moreRank(a))
+    .slice(0, 3);
+  if (key.length) {
+    h += '<h5>要点</h5>' + artRenderBullets(key, false);
+  }
+  if (more.length) {
+    h += '<h5>どこで出てくる</h5>' + artRenderBullets(more, true);
+  }
+  if (!key.length && !more.length) {
+    h += '<p class="ap-empty">この問題の「頭に入る版」や AI 解説から、この条文への短い要点は見つかりませんでした。'
       + '下のボタンから e-Gov の全文を開けます。</p>';
     if (law) h += '<p class="ap-empty">法令：' + esc(law) + '</p>';
-  }
-  const g = (typeof gistFor === 'function' ? gistFor(cite) : null) || (typeof localGist === 'function' ? localGist(cite) : null);
-  if (g && g.t) {
-    h = '<h5>一言メモ（既存）</h5><div class="ap-hit"><span class="wh">' + esc(g.src || 'メモ')
-      + '</span><div class="tx">' + esc(g.t) + '</div></div>' + h;
   }
   body.innerHTML = h;
   document.body.classList.add('artopen');
