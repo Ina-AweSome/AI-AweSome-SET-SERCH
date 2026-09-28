@@ -2464,15 +2464,16 @@ function artNormKey(text){
   return artCleanSnippet(text).replace(/\*\*/g, '').replace(/\s+/g, '').toLowerCase();
 }
 function artWhereLabel(where){
-  return String(where || '')
-    .replace(/・要点$|・条文$|・見る所$|・注意$|・注$|・規範$|・結論$|・事実$/, '')
+  let w = String(where || '')
+    .replace(/・要点$|・見る所$|・注意$|・注$|・規範$|・結論$|・事実$/, '')
     .replace(/・条文タグ$/, '')
-    .replace(/・(\d+)[\s　]*([^・\d]*)$/, '・$1')  /* Claude・④ 条文 → Claude・④ */
     .replace(/^⑥ 必ず書く一文$/, '⑥')
     .replace(/^④ 取り違え$/, '④')
     .replace(/^⑤ 要件$/, '⑤')
-    .replace(/^一言メモ.*/, '一言')
-    .trim();
+    .replace(/^一言メモ.*/, '一言');
+  /* Claude・④ 条文 / Claude・⑥ 各肢の解説 → Claude・④ / Claude・⑥ */
+  w = w.replace(/・([①-⑳\d]+)[\s　].*$/, '・$1');
+  return w.trim();
 }
 function artPushHit(out, where, text, needle, wantLaw, tier){
   const raw = artCleanSnippet(text);
