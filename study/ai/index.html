@@ -414,6 +414,45 @@ body.reading{overflow:hidden}
 a.egov,.sm a.egov,.md a.egov,.tok a.egov{color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(37,99,235,.45)}
 a.egov:hover,.sm a.egov:hover,.md a.egov:hover,.tok a.egov:hover{color:#2563eb;text-decoration-color:#2563eb}
 a.kw.egov-art{text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(37,99,235,.35)}
+/* ---- 条文クリック：要約パネル（e-Gov は別タブ） ---- */
+#artov{display:none;position:fixed;inset:0;z-index:40;background:rgba(21,32,43,.38)}
+body.artopen #artov{display:block}
+#artpanel{display:none;position:fixed;z-index:41;background:var(--surface);color:var(--ink);
+  border-left:1px solid var(--line);right:0;top:0;bottom:0;width:min(420px,92vw);
+  flex-direction:column;box-shadow:-6px 0 24px rgba(0,0,0,.1);
+  transform:translateX(8px);opacity:0;transition:transform .18s ease,opacity .18s ease}
+body.artopen #artpanel{display:flex;transform:translateX(0);opacity:1}
+.ap-bar{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ap-bar .ap-ttl{flex:1;min-width:0}
+.ap-bar .ap-ttl b{display:block;font-family:var(--disp);font-size:18px;line-height:1.35;color:var(--ai)}
+.ap-bar .ap-ttl span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.ap-x{flex:none;font:inherit;font-size:13px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);
+  border-radius:5px;padding:7px 12px;min-height:36px;cursor:pointer}
+.ap-x:hover{border-color:var(--ai);color:var(--ai)}
+.ap-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 28px}
+.ap-body h5{font-family:var(--disp);font-size:13px;letter-spacing:.06em;color:var(--muted);
+  margin:16px 0 8px;font-weight:700}
+.ap-body h5:first-child{margin-top:0}
+.ap-hit{padding:10px 12px;background:var(--sunk);border-radius:5px;margin:0 0 8px;
+  border-left:3px solid var(--ai)}
+.ap-hit .wh{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;font-weight:700;letter-spacing:.04em}
+.ap-hit .tx{font-size:14.5px;line-height:1.75;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.ap-hit .tx em{font-style:normal;background:linear-gradient(transparent 60%,rgba(46,115,85,.25) 60%)}
+.ap-empty{font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 12px}
+.ap-foot{padding:12px 14px 16px;border-top:1px solid var(--line);background:var(--paper);
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ap-egov{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:14px;font-weight:700;
+  color:var(--surface);background:var(--ai);border:1px solid var(--ai);border-radius:6px;
+  padding:10px 16px;min-height:42px;text-decoration:none;cursor:pointer}
+.ap-egov:hover{filter:brightness(1.06)}
+.ap-note{font-size:11.5px;color:var(--muted);line-height:1.55;flex:1;min-width:12em}
+@media(max-width:820px),(orientation:portrait) and (max-width:1100px){
+  #artpanel{left:0;right:0;top:auto;bottom:0;width:auto;height:min(72vh,640px);
+    border-left:0;border-top:1px solid var(--line);border-radius:12px 12px 0 0;
+    box-shadow:0 -6px 24px rgba(0,0,0,.12);transform:translateY(12px)}
+  body.artopen #artpanel{transform:translateY(0)}
+}
+@media(prefers-reduced-motion:reduce){#artpanel{transition:none}}
 .sm-warn{background:var(--flagbg);border-left:4px solid var(--differ);border-radius:4px;padding:8px 12px;margin:8px 0 0 34px;font-size:14px;line-height:1.7}
 .sm details{margin:8px 0 4px 34px}
 .sm summary{cursor:pointer;font-size:13.5px;color:var(--ai);list-style:none;min-height:30px;display:flex;align-items:center}
@@ -1624,7 +1663,7 @@ async function loadDay(day){
 
 /* ---- 条文 → e-Gov 法令検索 ----
    画面上の条番号引用を検索結果へリンクする（頭に入る版・AI本文・チップ・比較表）。
-   個別条文ページではなく search?keyword=…（本人希望 2026-09-27）。 */
+   条文ページ /law/{id}#Mp-At_N。クリックは要約パネル、e-Gov全文はボタン（2026-09-28）。 */
 const EGOV_LAW_NAMES = [
   '行政事件訴訟法','行政不服審査法','行政手続法','国家賠償法','国家公務員法',
   '公職選挙法','民事訴訟法','刑事訴訟法','民事執行法','不動産登記法',
@@ -1659,6 +1698,42 @@ const EGOV_LAW_CANON = {
   '民法':'民法','商法':'商法','刑法':'刑法','憲法':'憲法',
   '民':'民法','手':'手形法','小':'小切手法','憲':'憲法','刑':'刑法','商':'商法'
 };
+/* 法令名（正規化後）→ e-Gov law_id。未収録はトップへフォールバック */
+const EGOV_LAW_IDS = {
+  '行政事件訴訟法':'337AC0000000139',
+  '行政不服審査法':'426AC0000000068',
+  '行政手続法':'405AC0000000088',
+  '国家賠償法':'322AC0000000125',
+  '国家公務員法':'322AC0000000120',
+  '公職選挙法':'325AC1000000100',
+  '民事訴訟法':'408AC0000000109',
+  '刑事訴訟法':'323AC0000000131',
+  '民事執行法':'354AC0000000004',
+  '不動産登記法':'416AC0000000123',
+  '会社法施行規則':'418M60000010012',
+  '行政代執行法':'323AC0000000043',
+  '食品衛生法':'322AC0000000233',
+  '建築基準法':'325AC0000000201',
+  '生活保護法':'325AC0000000144',
+  '児童扶養手当法':'336AC0000000238',
+  '政策評価法':'413AC0000000086',
+  '行政機関情報公開法':'411AC0000000042',
+  '銃砲刀剣類所持等取締法':'333AC0000000006',
+  '国家行政組織法':'323AC0000000120',
+  '会社法':'417AC0000000086',
+  '手形法':'307AC0000000020',
+  '小切手法':'308AC0000000057',
+  '破産法':'416AC0000000075',
+  '裁判所法':'322AC0000000059',
+  '会計法':'322AC0000000035',
+  '警察法':'329AC0000000162',
+  '関税法':'329AC0000000061',
+  '民法':'129AC0000000089',
+  '商法':'132AC0000000048',
+  '刑法':'140AC0000000045',
+  '憲法':'321CONSTITUTION'
+};
+const EGOV_TOP = 'https://laws.e-gov.go.jp/';
 const EGOV_SUBJ_LAW = {
   '商法':'会社法','民法':'民法','刑法':'刑法','憲法':'憲法',
   '民訴法':'民事訴訟法','民事訴訟法':'民事訴訟法',
@@ -1681,8 +1756,16 @@ const EGOV_ART_RE = new RegExp(
   ')?',
   'g'
 );
+/* 会社法42条 → /law/...#Mp-At_42 */
 function egovSearchHref(q){
-  return 'https://laws.e-gov.go.jp/search?keyword=' + encodeURIComponent(q);
+  const s = String(q || '');
+  const m = s.match(/^(.+?)(\d{1,4})条(?:の(\d{1,2}))?/);
+  if (!m) return EGOV_TOP;
+  const law = EGOV_LAW_CANON[m[1]] || m[1];
+  const id = EGOV_LAW_IDS[law];
+  if (!id) return EGOV_TOP;
+  const frag = m[3] ? ('Mp-At_' + m[2] + '_' + m[3]) : ('Mp-At_' + m[2]);
+  return 'https://laws.e-gov.go.jp/law/' + id + '#' + frag;
 }
 function egovDefaultLaw(q){
   const sub = (q && q.subject) || (CUR && CUR.subject) || '';
@@ -1701,8 +1784,8 @@ function egovArtKeyword(full, rawLaw, lastLaw){
   return { law, kw: law + artPart };
 }
 function egovAnchor(full, kw){
-  return '<a class="egov" href="' + egovSearchHref(kw) + '" target="_blank" rel="noopener">'
-      + esc(full) + '</a>';
+  return '<a class="egov" href="' + egovSearchHref(kw) + '" data-cite="' + esc(kw)
+      + '" target="_blank" rel="noopener">' + esc(full) + '</a>';
 }
 /* 条番号の連続をリンク化。法令名のない条は直前の法令名（なければ科目の既定）を引き継ぐ。
    「（主体は発起人のみ）」のような条番号でない括弧書きはそのまま。
@@ -1730,7 +1813,7 @@ function linkifyArts(text, q, alreadyEsc){
     else if (law) lastLaw = law;
     if (kw) {
       out += alreadyEsc
-        ? '<a class="egov" href="' + egovSearchHref(kw) + '" target="_blank" rel="noopener">' + full + '</a>'
+        ? '<a class="egov" href="' + egovSearchHref(kw) + '" data-cite="' + esc(kw) + '" target="_blank" rel="noopener">' + full + '</a>'
         : egovAnchor(full, kw);
     } else {
       out += wrap(full);
@@ -2313,5 +2396,190 @@ window.addEventListener('hashchange', () => {
   if (isWeekHash()) { renderWeek(); return; }
   const u = fromHash(), sec = hashSec(); if (u) Promise.resolve(show(u)).then(() => scrollToSec(sec));
 });
+
+/* ---- 条文引用クリック → 要約パネル（Option A） ----
+   a.egov の通常クリックはアプリ内パネル。Ctrl/⌘/Shift/Alt・中クリックは e-Gov をそのまま。
+   要約は q.sum（頭に入る版）と AI チップ／本文の既存言及のみ。新規の法解釈は作らない。 */
+let ART_PANEL_CITE = '';
+function artNeedle(cite){
+  const s = egovNormCite(String(cite || ''));
+  const m = s.match(/(\d{1,4})条(?:の(\d{1,2}))?/);
+  if (!m) return '';
+  return m[2] ? (m[1] + '条の' + m[2]) : (m[1] + '条');
+}
+function artLawLabel(cite){
+  const s = egovNormCite(String(cite || ''));
+  const m = s.match(/^(.+?)(\d{1,4})条(?:の(\d{1,2}))?/);
+  if (!m) return { law: '', label: s };
+  const law = EGOV_LAW_CANON[m[1]] || m[1];
+  const art = m[3] ? (m[2] + '条の' + m[3]) : (m[2] + '条');
+  return { law, label: (law ? law : '') + art };
+}
+function artTextHas(text, needle){
+  if (!text || !needle) return false;
+  const s = String(text);
+  const n = String(needle);
+  let i = 0;
+  while ((i = s.indexOf(n, i)) !== -1) {
+    if (i === 0 || !/\d/.test(s.charAt(i - 1))) return true;
+    i += n.length;
+  }
+  return false;
+}
+function artPushHit(out, where, text, needle, wantLaw){
+  const raw = String(text || '').trim();
+  if (!raw || !artTextHas(raw, needle)) return;
+  /* 法令名付き引用のとき、別法令＋同番号（手形法42条 vs 会社法42条）は落とす */
+  if (wantLaw) {
+    const re = new RegExp('([一-龯ァ-ヶーA-Za-z]{1,24})\\s*' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const m = raw.match(re);
+    if (m) {
+      const other = EGOV_LAW_CANON[m[1]] || m[1];
+      if (other && other !== wantLaw && EGOV_LAW_IDS[other]) return;
+    }
+  }
+  if (out.some(h => h.text === raw && h.where === where)) return;
+  out.push({ where, text: raw });
+}
+function collectArtMentions(q, cite){
+  const needle = artNeedle(cite);
+  const wantLaw = artLawLabel(cite).law || '';
+  const out = [];
+  if (!needle || !q) return out;
+  const S = q.sum || null;
+  if (S) {
+    artPushHit(out, 'テーマ', S.theme, needle, wantLaw);
+    artPushHit(out, '正解メモ', S.answer_note, needle, wantLaw);
+    artPushHit(out, '次に迷ったら', S.next, needle, wantLaw);
+    const ax = S.axis || {};
+    artPushHit(out, '① 軸', ax.lead, needle, wantLaw);
+    artPushHit(out, '① 軸・注', ax.note, needle, wantLaw);
+    (ax.boxes || []).forEach(b => {
+      artPushHit(out, '① 軸', b.q, needle, wantLaw);
+      (b.rows || []).forEach(r => {
+        artPushHit(out, '① 軸', ((r[0] || '') + ' ' + (r[1] || '')).trim(), needle, wantLaw);
+      });
+    });
+    (S.legs || []).forEach(L => {
+      const lab = '③ 肢' + (L.l || '');
+      artPushHit(out, lab + '・見る所', L.look, needle, wantLaw);
+      artPushHit(out, lab + '・要点', L.one, needle, wantLaw);
+      artPushHit(out, lab + '・条文', L.src, needle, wantLaw);
+      artPushHit(out, lab + '・注意', L.warn, needle, wantLaw);
+    });
+    (S.flow || []).forEach(F => {
+      const lab = '③ ' + (F.n || '論点');
+      artPushHit(out, lab + '・規範', F.rule, needle, wantLaw);
+      artPushHit(out, lab + '・結論', F.concl, needle, wantLaw);
+      artPushHit(out, lab + '・条文', F.src, needle, wantLaw);
+      artPushHit(out, lab + '・注意', F.warn, needle, wantLaw);
+      (F.facts || []).forEach(x => artPushHit(out, lab + '・事実', x, needle, wantLaw));
+    });
+    (S.traps || []).forEach(t => {
+      artPushHit(out, '④ 取り違え', (t[0] || ''), needle, wantLaw);
+      artPushHit(out, '④ 取り違え', ((t[0] || '') + '：' + (t[1] || '')).trim(), needle, wantLaw);
+    });
+    (S.reqs || []).forEach(r => {
+      const row = [r[0], r[1], r[2]].filter(Boolean).join('／');
+      artPushHit(out, '⑤ 要件', row, needle, wantLaw);
+    });
+    (S.must || []).forEach(x => artPushHit(out, '⑥ 必ず書く一文', x, needle, wantLaw));
+  }
+  const A = typeof ais === 'function' ? ais(q) : Object.keys(q.ai || {});
+  A.forEach(a => {
+    const ai = q.ai[a] || {};
+    (ai.arts || ai.articles || []).forEach(k => {
+      if (artTextHas(k, needle)) artPushHit(out, a + '・条文タグ', k, needle, wantLaw);
+    });
+    Object.entries(ai.sections || {}).forEach(([sec, body]) => {
+      if (!body || !artTextHas(body, needle)) return;
+      const lines = String(body).split(/\n+/).map(x => x.trim()).filter(Boolean);
+      const hitLines = lines.filter(ln => artTextHas(ln, needle)).slice(0, 2);
+      hitLines.forEach(ln => {
+        const snip = ln.length > 180 ? ln.slice(0, 180) + '…' : ln;
+        artPushHit(out, a + '・' + sec, snip, needle, wantLaw);
+      });
+    });
+  });
+  return out;
+}
+function artPanelEl(){
+  let ov = document.getElementById('artov');
+  let pan = document.getElementById('artpanel');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'artov'; ov.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(ov);
+    ov.addEventListener('click', () => closeArtPanel());
+  }
+  if (!pan) {
+    pan = document.createElement('div'); pan.id = 'artpanel';
+    pan.setAttribute('role', 'dialog'); pan.setAttribute('aria-modal', 'true'); pan.setAttribute('aria-label', '条文の要点');
+    pan.innerHTML = '<div class="ap-bar"><div class="ap-ttl"><b id="ap-title"></b><span id="ap-sub"></span></div>'
+      + '<button type="button" class="ap-x" id="ap-x" aria-label="閉じる">閉じる</button></div>'
+      + '<div class="ap-body" id="ap-body"></div>'
+      + '<div class="ap-foot"><a class="ap-egov" id="ap-egov" target="_blank" rel="noopener">e-Govで全文</a>'
+      + '<span class="ap-note">このパネルは学習ノート上の言及だけを集めます。法的助言ではありません。</span></div>';
+    document.body.appendChild(pan);
+    pan.querySelector('#ap-x').onclick = () => closeArtPanel();
+  }
+  return pan;
+}
+function closeArtPanel(){
+  ART_PANEL_CITE = '';
+  document.body.classList.remove('artopen');
+  const pan = document.getElementById('artpanel');
+  if (pan) pan.setAttribute('aria-hidden', 'true');
+}
+function openArtPanel(cite, href){
+  const q = CUR;
+  const { law, label } = artLawLabel(cite);
+  const hits = collectArtMentions(q, cite);
+  const pan = artPanelEl();
+  ART_PANEL_CITE = cite;
+  document.getElementById('ap-title').textContent = label || cite;
+  document.getElementById('ap-sub').textContent = (q
+    ? ((q.subject || '') + ' ' + (q.id || '') + (q.sum && q.sum.theme ? '　' + q.sum.theme : ''))
+    : '');
+  const eg = document.getElementById('ap-egov');
+  eg.href = href || egovSearchHref(cite);
+  eg.textContent = 'e-Govで全文';
+  const body = document.getElementById('ap-body');
+  let h = '';
+  if (hits.length) {
+    h += '<h5>この問題での言及</h5>' + hits.map(x =>
+      '<div class="ap-hit"><span class="wh">' + esc(x.where) + '</span>'
+      + '<div class="tx">' + esc(x.text).replace(/【(.+?)】/g, '<em>$1</em>') + '</div></div>'
+    ).join('');
+  } else {
+    h += '<p class="ap-empty">この問題の「頭に入る版」や AI 解説から、この条文への短い言及は見つかりませんでした。'
+      + '下のボタンから e-Gov の全文を開けます。</p>';
+    if (law) h += '<p class="ap-empty">法令：' + esc(law) + '</p>';
+  }
+  const g = (typeof gistFor === 'function' ? gistFor(cite) : null) || (typeof localGist === 'function' ? localGist(cite) : null);
+  if (g && g.t) {
+    h = '<h5>一言メモ（既存）</h5><div class="ap-hit"><span class="wh">' + esc(g.src || 'メモ')
+      + '</span><div class="tx">' + esc(g.t) + '</div></div>' + h;
+  }
+  body.innerHTML = h;
+  document.body.classList.add('artopen');
+  pan.setAttribute('aria-hidden', 'false');
+  try { pan.querySelector('#ap-x').focus(); } catch(e){}
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a.egov');
+  if (!a) return;
+  if (a.id === 'ap-egov' || a.classList.contains('ap-egov')) return;
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return;
+  e.preventDefault();
+  const cite = a.getAttribute('data-cite') || a.textContent.trim();
+  openArtPanel(cite, a.getAttribute('href') || egovSearchHref(cite));
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.body.classList.contains('artopen')) {
+    e.preventDefault();
+    closeArtPanel();
+  }
+});
+
 boot();
 </script>
