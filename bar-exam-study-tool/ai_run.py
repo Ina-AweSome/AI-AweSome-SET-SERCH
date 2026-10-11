@@ -430,6 +430,29 @@ def find_input(page, selectors):
     return None, None
 
 
+def wait_input(page, selectors, timeout=15.0):
+    """入力欄が描画されるまで待つ（Copilot などは読み込み後に遅れて出る）。"""
+    end = time.monotonic() + timeout
+    while True:
+        el, sel = find_input(page, selectors)
+        if el or time.monotonic() >= end:
+            return el, sel
+        time.sleep(0.5)
+
+
+def login_status(name, page) -> str:
+    """--check 用の表示。NotebookLM は一覧画面に入力欄が無いので、ログイン画面かどうかで判定。"""
+    if name == "NotebookLM":
+        url = page.url or ""
+        if "accounts.google.com" in url:
+            return "❌ 未ログイン（Googleのログイン画面）"
+        if "notebooklm" in url:
+            return "✅ ログイン済み（ノートブック一覧）"
+        return f"❓ 判定できず（{url[:60]}）"
+    el, _ = wait_input(page, SITES[name]["input"])
+    return "✅ 入力欄あり" if el else "❌ 入力欄なし（未ログインの可能性）"
+
+
 def distribute_one(page, site, prompt, dry_run=False):
     el, sel = find_input(page, site["input"])
     if not el:
@@ -554,8 +577,7 @@ def main():
         if args.check:
             print("\n=== ログイン状態チェック ===")
             for name in site_names:
-                el, sel = find_input(pages[name], SITES[name]["input"])
-                print(f"  {name}: {'✅ 入力欄あり' if el else '❌ 入力欄なし（未ログインの可能性）'}")
+                print(f"  {name}: {login_status(name, pages[name])}")
             input("Enterで閉じます...")
             finish()
             return
@@ -568,9 +590,8 @@ def main():
             print(f"\n[NotebookLM] {msg}")
 
         # ── 配布前チェック：入力欄が出ていないサイトは手動対応を促す ──
-        time.sleep(3)  # 入力欄・Cloudflare描画待ち
         missing = [n for n in site_names
-                   if not find_input(pages[n], SITES[n]["input"])[0]]
+                   if not wait_input(pages[n], SITES[n]["input"])[0]]  # 描画待ち込み
         if missing:
             print("\n⚠️ 入力欄が出ていないサイト:", ", ".join(missing))
             print("  → その窓で手動対応してください（例: 未ログインならログイン）。")
