@@ -10,8 +10,10 @@ ai_run.py — 予備試験「AI補完」配布＆回収エンジン（Chrome + P
   ④ 各回答を読み取り、Obsidian ２）AI補完/{AI名}/ に保存（回収）
   ⑤ 配布開始〜回収完了までの所要時間を表示
 
-専用プロファイル(playwright_chrome_profile)を使う。普段のChromeとは別物なので、
+専用プロファイル(bar-exam-ai-profile)の Chrome を「普通に」起動して操作する
+（自動テスト扱いにならないので Google にもログインできる）。普段のChromeとは別物なので、
 初回は各AIサイトへ「この窓の中で」ログインが要る（--login で一括で開ける）。
+実行後も専用Chromeは開いたまま残り、次回はそのまま使う（閉じたければ ⌘Q）。
 
 NotebookLM は問題ごとに「短答」「論文」を分けたノートブックを作る。
   名前は 例) 1011AI【短答】商法 Q32-Q35 株主総会決議の瑕疵
@@ -358,6 +360,64 @@ def fmt_elapsed(sec: float) -> str:
     return f"{m}分{s:02d}秒" if m else f"{s}秒"
 
 
+# ── ブラウザ起動 ─────────────────────────────────────
+# Playwright 自身に Chrome を起動させると、Mac ではキーチェーンを使わない設定
+# （--use-mock-keychain）と自動化フラグで起動するため、
+#   ・普通の Chrome で済ませたログイン（Cookie）が読めず毎回「未ログイン」になる
+#   ・Google が「安全でないブラウザ」としてログイン自体を拒否する
+# という問題が起きる。そこで専用プロファイルの Chrome を「普通に」起動し、
+# デバッグ用ポート経由で操作だけ接続する（ログインもこの窓で普通にできる）。
+CDP_PORT = 9223
+
+
+def _port_open(port: int) -> bool:
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def _profile_chrome_running() -> bool:
+    try:
+        r = subprocess.run(["pgrep", "-f", f"user-data-dir={USER_DATA_DIR}"],
+                           capture_output=True, text=True, timeout=5)
+        return bool(r.stdout.strip())
+    except Exception:
+        return False
+
+
+def open_browser(p):
+    """専用プロファイルの Chrome に接続する（無ければ普通に起動してから接続）。"""
+    if not _port_open(CDP_PORT):
+        if _profile_chrome_running():
+            raise SystemExit(
+                "専用Chromeが別の起動方法で開いたままです。その窓で ⌘Q するか、\n"
+                "  pkill -f bar-exam-ai-profile\n"
+                "を実行してから、もう一度実行してください。")
+        # 前回の異常終了で残った「使用中」の印を消す（Chromeが動いていない時だけ）
+        for name in ("SingletonLock", "SingletonSocket", "SingletonCookie"):
+            try:
+                (USER_DATA_DIR / name).unlink()
+            except OSError:
+                pass
+        subprocess.Popen([
+            "open", "-na", "Google Chrome", "--args",
+            f"--user-data-dir={USER_DATA_DIR}",
+            f"--remote-debugging-port={CDP_PORT}",
+            "--no-first-run", "--no-default-browser-check",
+        ])
+        for _ in range(60):
+            if _port_open(CDP_PORT):
+                break
+            time.sleep(0.5)
+        else:
+            raise SystemExit("Chromeの起動を確認できませんでした。もう一度実行してください。")
+        time.sleep(1.0)
+    browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{CDP_PORT}")
+    ctx = browser.contexts[0] if browser.contexts else browser.new_context()
+    return browser, ctx
+
+
 # ── ブラウザ操作 ─────────────────────────────────────
 def find_input(page, selectors):
     for sel in selectors:
@@ -465,12 +525,18 @@ def main():
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(USER_DATA_DIR), headless=False,
-            channel="chrome",   # 実Google Chrome本体を使う（別プロファイル）
-            viewport={"width": 1280, "height": 900},
-        )
+        browser, ctx = open_browser(p)
         pages = {}
+
+        def finish():
+            # 開いたタブだけ閉じて接続を切る（専用Chromeは開いたまま＝次回はすぐ使える）
+            for pg in pages.values():
+                try:
+                    pg.close()
+                except Exception:
+                    pass
+            browser.close()
+
         for name in site_names:
             page = ctx.new_page()
             try:
@@ -482,7 +548,7 @@ def main():
 
         if args.login:
             input("\n各サイトにログインしてください。完了したらEnterで閉じます...")
-            ctx.close()
+            finish()
             return
 
         if args.check:
@@ -491,7 +557,7 @@ def main():
                 el, sel = find_input(pages[name], SITES[name]["input"])
                 print(f"  {name}: {'✅ 入力欄あり' if el else '❌ 入力欄なし（未ログインの可能性）'}")
             input("Enterで閉じます...")
-            ctx.close()
+            finish()
             return
 
         # ── NotebookLM：URL未設定なら、その日のノートブックを名前で開く／作る ──
@@ -534,7 +600,7 @@ def main():
         if args.no_wait:
             print(f"\n⏱ 配布まで {fmt_elapsed(time.monotonic() - t_start)}")
             input("\n配布のみ。Enterで閉じます...")
-            ctx.close()
+            finish()
             return
 
         # ── 回収 ──
@@ -571,7 +637,7 @@ def main():
               f"（送信〜生成待ち {fmt_elapsed(t_wait)} / 回収 {fmt_elapsed(total - t_wait)}）"
               f"  保存 {saved}/{len(site_names)} 件")
         input("\n回収完了。Enterで閉じます...")
-        ctx.close()
+        finish()
 
 
 if __name__ == "__main__":
