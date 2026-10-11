@@ -72,7 +72,9 @@ SITES = {
     },
     "Copilot": {
         "url": "https://copilot.microsoft.com/",
-        "input": ["textarea#userInput", "textarea", "div[contenteditable='true']"],
+        "input": ["textarea#userInput", "textarea[placeholder*='Copilot']",
+                  "textarea[placeholder*='メッセージ']", "textarea",
+                  "[role='textbox'][contenteditable='true']", "div[contenteditable='true']"],
         "send": "enter",
         "answer": ["[data-content='ai-message']", ".ac-textBlock", ".prose"],
     },
@@ -122,6 +124,13 @@ def read_clipboard() -> str:
                               timeout=5).stdout.strip()
     except Exception:
         return ""
+
+
+def looks_like_command(text: str) -> bool:
+    """クリップボードにターミナル用コマンドが残っている時に、それを問題文として送らないための判定。"""
+    head = text.strip().splitlines()[0] if text.strip() else ""
+    return ("ai_run.py" in text or head.startswith(("./venv", "python", "cd ", "pkill ", "rm "))
+            or "user-data-dir=" in text)
 
 
 def write_clipboard(text: str) -> bool:
@@ -254,7 +263,9 @@ def _wait_for(page, selectors, timeout=15.0):
 
 
 # NotebookLM の画面部品（候補セレクタ。画面変更で外れたら手動に切り替わる）
-_NB_CREATE = ["button:has-text('新規作成')", "button:has-text('ノートブックを新規作成')",
+# 2026-10 時点で NotebookLM は「Gemini Notebook」(notebook.google.com) になり、ボタンは「新しいノートブック」
+_NB_CREATE = ["button:has-text('新しいノートブック')", "[aria-label*='新しいノートブック']",
+              "button:has-text('新規作成')", "button:has-text('ノートブックを新規作成')",
               "button:has-text('Create new')", "button:has-text('New notebook')"]
 _NB_PASTE = ["button:has-text('コピーしたテキスト')", "mat-chip:has-text('コピーしたテキスト')",
              "button:has-text('テキストを貼り付け')", "button:has-text('Copied text')",
@@ -292,7 +303,7 @@ def open_today_notebook(page, kind: str, mondai: str) -> tuple[bool, str]:
         try:
             name = card.inner_text().strip().splitlines()[0]
             card.click()
-            page.wait_for_url("**/notebook/**", timeout=20000)
+            time.sleep(3.0)  # ノートブックを開く遷移待ち（URLの形式が変わっても動くよう固定待ち）
             return True, f"既存のノートブック「{name}」を開きました"
         except Exception as e:
             return False, f"ノートブック「{title}」を開けませんでした: {e}"
@@ -446,11 +457,64 @@ def login_status(name, page) -> str:
         url = page.url or ""
         if "accounts.google.com" in url:
             return "❌ 未ログイン（Googleのログイン画面）"
-        if "notebooklm" in url:
+        if "notebooklm" in url or "notebook.google" in url:
             return "✅ ログイン済み（ノートブック一覧）"
         return f"❓ 判定できず（{url[:60]}）"
     el, _ = wait_input(page, SITES[name]["input"])
     return "✅ 入力欄あり" if el else "❌ 入力欄なし（未ログインの可能性）"
+
+
+# ── 画面調査（--inspect）：各サイトの入力欄・ボタンを書き出し、セレクタ調整に使う ──
+_INSPECT_JS = """
+() => {
+  const vis = el => { const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; };
+  const pick = el => ({
+    tag: el.tagName.toLowerCase(), id: el.id || '', cls: (el.className && el.className.baseVal === undefined ? el.className : '').toString().slice(0, 120),
+    placeholder: el.getAttribute('placeholder') || el.getAttribute('data-placeholder') || '',
+    aria: el.getAttribute('aria-label') || '', role: el.getAttribute('role') || '',
+    editable: el.getAttribute('contenteditable') || '',
+    text: (el.innerText || el.value || '').trim().replace(/\\s+/g, ' ').slice(0, 60),
+    parent: el.parentElement ? el.parentElement.tagName.toLowerCase() : '',
+  });
+  const q = s => Array.from(document.querySelectorAll(s)).filter(vis).slice(0, 60).map(pick);
+  return { url: location.href, title: document.title,
+    inputs: q("textarea, input:not([type=hidden]), [contenteditable='true'], [role='textbox']"),
+    buttons: q("button, [role='button'], a[role='link'], mat-chip"),
+    titles: q("h1, h2, [class*='title' i]") };
+}
+"""
+
+
+def run_inspect(pages):
+    out = {}
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    steps = [("初期画面", "")]
+    if "NotebookLM" in pages:
+        steps += [
+            ("ソース追加画面", "Gemini Notebook の窓で「新しいノートブック」を押し、"
+                              "ソースを追加する画面（コピーしたテキスト等の選択肢）を出してください。"),
+            ("貼り付け欄", "「コピーしたテキスト」（貼り付け）を選び、貼り付け欄が出た状態にしてください"
+                          "（まだ挿入は押さない）。"),
+            ("ノートブック画面", "何か短い文字を貼って「挿入」し、ノートブックのチャット画面"
+                              "（入力欄とタイトルが見える状態）にしてください。"),
+        ]
+    for label, ask in steps:
+        if ask:
+            input(f"\n▶ {ask}\n  できたら Enter...")
+        else:
+            time.sleep(8)  # 初期描画待ち
+        for name, pg in pages.items():
+            if label != "初期画面" and name != "NotebookLM":
+                continue
+            try:
+                out[f"{label}/{name}"] = pg.evaluate(_INSPECT_JS)
+            except Exception as e:
+                out[f"{label}/{name}"] = {"error": str(e)}
+        print(f"  ✓ {label} を記録しました")
+    path = HERE / "data" / f"inspect_{stamp}.json"
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\n保存しました: data/{path.name}\n（Google Drive 経由で Claude が読めます。チャットで「保存した」と伝えてください）")
 
 
 def distribute_one(page, site, prompt, dry_run=False):
@@ -504,6 +568,8 @@ def main():
     ap.add_argument("--check", action="store_true", help="ログイン状態だけ確認")
     ap.add_argument("--dry-run", action="store_true", help="送信せずプロンプトのみ表示")
     ap.add_argument("--no-wait", action="store_true", help="回収の待機をしない（配布のみ）")
+    ap.add_argument("--inspect", action="store_true",
+                    help="画面の部品（入力欄・ボタン）を調べて data/inspect_*.json に保存（調整用）")
     args = ap.parse_args()
 
     site_names = list(SITES.keys())
@@ -516,7 +582,7 @@ def main():
     # --dry-run はブラウザ不要
     prompt = None
     pat = None
-    if not (args.login or args.check):
+    if not (args.login or args.check or args.inspect):
         patterns = load_patterns()
         if not patterns:
             raise SystemExit(f"プロンプトが {PROMPT_DIR} にありません")
@@ -524,6 +590,11 @@ def main():
         mondai = args.text if args.text else read_clipboard()
         if not mondai:
             raise SystemExit("問題文が空です（--text かクリップボードで渡す）")
+        if not args.text and looks_like_command(mondai):
+            raise SystemExit(
+                "クリップボードの中身が問題文ではなくコマンドのようです:\n"
+                f"  {mondai[:60]}\n"
+                "問題文をコピーし直してから、ターミナルで ↑キー → Enter で再実行してください。")
         prompt = build_prompt(pat["body"], mondai)
         # 保存用の科目・問題番号を対話入力（未指定かつ端末のとき）
         if sys.stdin.isatty():
@@ -571,6 +642,11 @@ def main():
 
         if args.login:
             input("\n各サイトにログインしてください。完了したらEnterで閉じます...")
+            finish()
+            return
+
+        if args.inspect:
+            run_inspect(pages)
             finish()
             return
 
